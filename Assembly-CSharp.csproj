@@ -41,14 +41,14 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-     <Compile Include="Assets\Player.cs" />
-     <Compile Include="Assets\PlayerManager.cs" />
+     <Compile Include="Assets\Scripts\Player.cs" />
+     <Compile Include="Assets\Scripts\Managers\PlayerManager.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\TextPopup.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\GenerateWorldSpaceText.cs" />
      <Compile Include="Assets\Scripts\Utility\ObjectPooling.cs" />
      <Compile Include="Assets\Scripts\Utility\MonoSingleton.cs" />
      <Compile Include="Assets\Scripts\Managers\UIManager.cs" />
-     <Compile Include="Assets\PlayerConnectionManager.cs" />
+     <Compile Include="Assets\Scripts\Managers\PlayerConnectionManager.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
