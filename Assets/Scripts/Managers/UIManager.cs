@@ -13,14 +13,12 @@ namespace Managers
         [SerializeField] private TMP_InputField ipAddressInputField;
         [SerializeField] private TMP_InputField portInputField;
         [SerializeField] private PlayerConnectionManager connectionManager;
-
-        [FormerlySerializedAs("_transport")] [SerializeField]
-        private UNetTransport transport;
+        [SerializeField] private UNetTransport transport;
 
 
-        private bool _hosting = false;
-        private bool _connected = false;
-        private bool _dedicated = false;
+        private bool _hosting;
+        private bool _connected;
+        private bool _dedicated;
 
         private Button _stopButton;
 
@@ -39,7 +37,7 @@ namespace Managers
                 return;
             }
         }
-    
+
         public void Shutdown()
         {
             _hosting = false;

@@ -1,30 +1,32 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 using Utility;
 
-public class PlayerManager : MonoSingleton<PlayerManager>
+namespace Managers
 {
-    private readonly Dictionary<int, Color> _playerTeamTeamColours = new();
-
-    private void OnEnable()
+    public class PlayerManager : MonoSingleton<PlayerManager>
     {
-        GenerateTeamColours(new List<Color>{Color.green,Color.red,Color.blue,Color.cyan,Color.gray,Color.magenta});
-    }
+        private readonly Dictionary<int, Color> _playerTeamTeamColours = new();
 
-    private void GenerateTeamColours([NotNull] List<Color> colors)
-    {
-        if (colors == null) throw new ArgumentNullException(nameof(colors));
-        for (var i = 0; i < colors.Count; i++)
+        private void OnEnable()
         {
-            _playerTeamTeamColours.Add(i,colors[i]);
+            GenerateTeamColours(new List<Color>{Color.green,Color.red,Color.blue,Color.cyan,Color.gray,Color.magenta});
         }
-    }
 
-    public Color GetColourFromTeamID(int teamID)
-    {
-        return teamID >= _playerTeamTeamColours.Count ? _playerTeamTeamColours[0] : _playerTeamTeamColours[teamID];
+        private void GenerateTeamColours([NotNull] List<Color> colors)
+        {
+            if (colors == null) throw new ArgumentNullException(nameof(colors));
+            for (var i = 0; i < colors.Count; i++)
+            {
+                _playerTeamTeamColours.Add(i,colors[i]);
+            }
+        }
+
+        public Color GetColourFromTeamID(int teamID)
+        {
+            return teamID >= _playerTeamTeamColours.Count ? _playerTeamTeamColours[0] : _playerTeamTeamColours[teamID];
+        }
     }
 }
