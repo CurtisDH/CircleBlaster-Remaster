@@ -128,9 +128,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d17593f8d3f7fd4468c9288b4dc51d03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  teamID: 6
+  teamID: 0
   teamColourSpriteRenderer: {fileID: 1390246452733342425}
-  moveSpeed: 10
+  moveSpeed: 1
+  upDownPos:
+    m_InternalValue: 0
+  leftRightPos:
+    m_InternalValue: 0
+  oldUpDownPos: 0
+  oldLeftRightPos: 0
 --- !u!114 &50750719
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,7 +12,13 @@ public class Player : NetworkBehaviour
 
     [SerializeField] float moveSpeed = 10;
 
-    private NetworkVariable<Vector3> _position = new();
+    [SerializeField] private NetworkVariable<float> upDownPos = new();
+    [SerializeField] private NetworkVariable<float> leftRightPos = new();
+
+
+    [SerializeField] float oldUpDownPos;
+    [SerializeField] private float oldLeftRightPos;
+
 
     private void OnEnable()
     {
@@ -21,6 +27,11 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
+        if (IsServer)
+        {
+            UpdateServer();
+        }
+
         if (IsClient && IsOwner)
         {
             float hoz = 0;
@@ -28,21 +39,30 @@ public class Player : NetworkBehaviour
 
 
             hoz = KeyDown(hoz, ref vert);
-            vert = ReleaseKey(vert, ref hoz);
+
 
             var direction = new Vector2(hoz, vert);
             direction = Vector3.ClampMagnitude(direction, 1f);
 
-            
-            transform.Translate(direction * Time.deltaTime * moveSpeed);
-            SubmitPositionRequestServerRPC(transform.position);
+
+            //transform.Translate(direction * Time.deltaTime * moveSpeed);
+            if (hoz != oldLeftRightPos || vert != oldUpDownPos)
+            {
+                var position = transform.position;
+                UpdateClientPositionServerRPC(vert, hoz);
+                oldLeftRightPos = hoz;
+                oldUpDownPos = vert;
+            }
         }
     }
 
-    [ServerRpc]
-    private void SubmitPositionRequestServerRPC(Vector3 position, ServerRpcParams rpcParams = default)
+
+    private void UpdateServer()
     {
-        _position.Value = position;
+        var position = transform.position;
+        position = new Vector3(position.x + leftRightPos.Value,
+            position.y + upDownPos.Value, 0);
+        transform.position = position;
     }
 
 
@@ -50,39 +70,31 @@ public class Player : NetworkBehaviour
     {
         if (Input.GetKey(KeybindManager.Instance.moveLeft))
         {
-            hoz = -1;
+            hoz -= (moveSpeed / 100);
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveRight))
         {
-            hoz = 1;
+            hoz += (moveSpeed / 100);
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveDown))
         {
-            vert = -1;
+            vert -= (moveSpeed / 100);
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveUp))
         {
-            vert = 1;
+            vert += (moveSpeed / 100);
         }
 
         return hoz;
     }
 
-    private float ReleaseKey(float vert, ref float hoz)
+    [ServerRpc]
+    public void UpdateClientPositionServerRPC(float upDown, float leftRight)
     {
-        if (Input.GetKeyUp(KeybindManager.Instance.moveUp) || Input.GetKeyUp(KeybindManager.Instance.moveDown))
-        {
-            vert = 0;
-        }
-
-        if (Input.GetKeyUp(KeybindManager.Instance.moveLeft) || Input.GetKeyUp(KeybindManager.Instance.moveRight))
-        {
-            hoz = 0;
-        }
-
-        return vert;
+        upDownPos.Value = upDown;
+        leftRightPos.Value = leftRight;
     }
 }
