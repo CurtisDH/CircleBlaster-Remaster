@@ -844,6 +844,15 @@
      <Reference Include="Unity.Netcode.Editor">
      <HintPath>F:/Github/Unity/CircleBlaster-Remaster/Library/ScriptAssemblies/Unity.Netcode.Editor.dll</HintPath>
      </Reference>
+     <Reference Include="Unity.Sysroot.Linux_x86_64">
+     <HintPath>F:/Github/Unity/CircleBlaster-Remaster/Library/ScriptAssemblies/Unity.Sysroot.Linux_x86_64.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.Toolchain.Win-x86_64-Linux-x86_64">
+     <HintPath>F:/Github/Unity/CircleBlaster-Remaster/Library/ScriptAssemblies/Unity.Toolchain.Win-x86_64-Linux-x86_64.dll</HintPath>
+     </Reference>
+     <Reference Include="Unity.SysrootPackage.Editor">
+     <HintPath>F:/Github/Unity/CircleBlaster-Remaster/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
+     </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="ClientNetworkTransform.csproj">
