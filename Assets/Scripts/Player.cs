@@ -6,16 +6,9 @@ public class Player : NetworkBehaviour
 {
     [SerializeField] private int teamID;
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
+    [SerializeField] private PlayerWeapon weapon;
 
     [SerializeField] float moveSpeed = 10;
-
-    [SerializeField] private NetworkVariable<float> upDownPos = new();
-    [SerializeField] private NetworkVariable<float> leftRightPos = new();
-
-
-    [SerializeField] float oldUpDownPos;
-    [SerializeField] private float oldLeftRightPos;
-
 
     private void OnEnable()
     {
@@ -26,21 +19,28 @@ public class Player : NetworkBehaviour
     {
         if (IsClient && IsOwner)
         {
-            float hoz = 0;
-            float vert = 0;
-
-
-            hoz = KeyDown(hoz, ref vert);
-            vert = ReleaseKey(vert, ref hoz);
-
-            var direction = new Vector2(hoz, vert);
-            direction = Vector3.ClampMagnitude(direction, 1f);
-
-            
-            transform.Translate(direction * Time.deltaTime * moveSpeed);
+            UpdatePlayerWeapon();
+            PlayerMovement();
         }
     }
-    
+
+    private void PlayerMovement()
+    {
+        float hoz = 0;
+        float vert = 0;
+        hoz = KeyDown(hoz, ref vert);
+        vert = ReleaseKey(vert, ref hoz);
+        var direction = new Vector2(hoz, vert);
+        direction = Vector3.ClampMagnitude(direction, 1f);
+        transform.Translate(direction * Time.deltaTime * moveSpeed);
+    }
+
+    private void UpdatePlayerWeapon()
+    {
+        var worldSpace = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        var newPos = new Vector3(worldSpace.x, worldSpace.y, 0);
+        weapon.transform.position = newPos;
+    }
 
 
     private float KeyDown(float hoz, ref float vert)
@@ -82,5 +82,4 @@ public class Player : NetworkBehaviour
 
         return vert;
     }
-    
 }
