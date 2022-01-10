@@ -846,6 +846,10 @@
      </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="ClientNetworkTransform.csproj">
+      <Project>{1c8c9361-9262-f706-f9ba-5a61bf3d737f}</Project>
+      <Name>ClientNetworkTransform</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
