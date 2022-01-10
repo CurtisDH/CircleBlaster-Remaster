@@ -24,11 +24,6 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
-        if (IsServer)
-        {
-            UpdateServer();
-        }
-
         if (IsClient && IsOwner)
         {
             float hoz = 0;
@@ -36,53 +31,56 @@ public class Player : NetworkBehaviour
 
 
             hoz = KeyDown(hoz, ref vert);
-            if (hoz != oldLeftRightPos || vert != oldUpDownPos)
-            {
-                var position = transform.position;
-                UpdateClientPositionServerRPC(vert, hoz);
-                oldLeftRightPos = hoz;
-                oldUpDownPos = vert;
-            }
+            vert = ReleaseKey(vert, ref hoz);
+
+            var direction = new Vector2(hoz, vert);
+            direction = Vector3.ClampMagnitude(direction, 1f);
+
+            
+            transform.Translate(direction * Time.deltaTime * moveSpeed);
         }
     }
     
-    private void UpdateServer()
-    {
-        var position = transform.position;
-        position = new Vector3(position.x + leftRightPos.Value,
-            position.y + upDownPos.Value, 0);
-        transform.position = position;
-    }
-    
+
+
     private float KeyDown(float hoz, ref float vert)
     {
         if (Input.GetKey(KeybindManager.Instance.moveLeft))
         {
-            hoz -= (moveSpeed / 100);
+            hoz = -1;
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveRight))
         {
-            hoz += (moveSpeed / 100);
+            hoz = 1;
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveDown))
         {
-            vert -= (moveSpeed / 100);
+            vert = -1;
         }
 
         if (Input.GetKey(KeybindManager.Instance.moveUp))
         {
-            vert += (moveSpeed / 100);
+            vert = 1;
         }
 
         return hoz;
     }
 
-    [ServerRpc]
-    private void UpdateClientPositionServerRPC(float upDown, float leftRight)
+    private float ReleaseKey(float vert, ref float hoz)
     {
-        upDownPos.Value = upDown;
-        leftRightPos.Value = leftRight;
+        if (Input.GetKeyUp(KeybindManager.Instance.moveUp) || Input.GetKeyUp(KeybindManager.Instance.moveDown))
+        {
+            vert = 0;
+        }
+
+        if (Input.GetKeyUp(KeybindManager.Instance.moveLeft) || Input.GetKeyUp(KeybindManager.Instance.moveRight))
+        {
+            hoz = 0;
+        }
+
+        return vert;
     }
+    
 }

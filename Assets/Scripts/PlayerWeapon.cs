@@ -1,5 +1,6 @@
 ﻿using System;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class PlayerWeapon : NetworkBehaviour
@@ -24,6 +25,7 @@ public class PlayerWeapon : NetworkBehaviour
             weaponTransform.position = newPos;
             UpdateClientWeaponPositionServerRPC(weaponTransform.position);
         }
+
         if (IsServer)
         {
             UpdateServer();
