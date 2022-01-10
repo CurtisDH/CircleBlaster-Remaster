@@ -12,14 +12,17 @@ public class Player : NetworkBehaviour
 
     private void OnEnable()
     {
+        //TODO Allow customisation within a UI menu.
         teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
+        weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID+1));
+        weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID+2));
     }
 
     private void Update()
     {
         if (IsClient && IsOwner)
         {
-            UpdatePlayerWeapon();
+            weapon.UpdatePosition();
             PlayerMovement();
         }
     }
@@ -33,13 +36,6 @@ public class Player : NetworkBehaviour
         var direction = new Vector2(hoz, vert);
         direction = Vector3.ClampMagnitude(direction, 1f);
         transform.Translate(direction * Time.deltaTime * moveSpeed);
-    }
-
-    private void UpdatePlayerWeapon()
-    {
-        var worldSpace = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        var newPos = new Vector3(worldSpace.x, worldSpace.y, 0);
-        weapon.transform.position = newPos;
     }
 
 

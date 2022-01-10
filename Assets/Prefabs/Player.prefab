@@ -532,10 +532,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c47ee03fb824409abb0228afe007efd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponPosition:
-    m_InternalValue: {x: 0, y: 0, z: 0}
   outerCircle: {fileID: 1752289111663396988}
   innerCircle: {fileID: 5309347855759976038}
+  player: {fileID: 1390246451876592819}
+  clampRadius: 0.6
 --- !u!114 &3899739229722585471
 MonoBehaviour:
   m_ObjectHideFlags: 0
