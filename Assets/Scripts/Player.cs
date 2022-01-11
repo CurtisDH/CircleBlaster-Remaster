@@ -1,6 +1,7 @@
 using Managers;
 using Unity.Netcode;
 using UnityEngine;
+using Utility;
 
 public class Player : NetworkBehaviour
 {
@@ -14,8 +15,8 @@ public class Player : NetworkBehaviour
     {
         //TODO Allow customisation within a UI menu.
         teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
-        weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID+1));
-        weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID+2));
+        weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
+        weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
     }
 
     private void Update()
@@ -24,6 +25,18 @@ public class Player : NetworkBehaviour
         {
             weapon.UpdatePosition();
             PlayerMovement();
+            Shoot();
+        }
+    }
+
+    private void Shoot()
+    {
+        if (Input.GetKeyDown(KeybindManager.Instance.shootPrimary))
+        {
+            var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
+            projectile.ProjectileSetup(teamID, moveSpeed, 1, weapon.transform);
+            projectile.gameObject.SetActive(true);
+
         }
     }
 
@@ -35,7 +48,7 @@ public class Player : NetworkBehaviour
         vert = ReleaseKey(vert, ref hoz);
         var direction = new Vector2(hoz, vert);
         direction = Vector3.ClampMagnitude(direction, 1f);
-        transform.Translate(direction * Time.deltaTime * moveSpeed);
+        transform.Translate(direction * (Time.deltaTime * moveSpeed));
     }
 
 

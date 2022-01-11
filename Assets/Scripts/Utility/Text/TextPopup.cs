@@ -14,12 +14,12 @@ namespace Utility.Text
         private void OnEnable()
         {
             _timer = new WaitForSeconds(duration);
-            ObjectPooling.Instance.PoolObject(typeof(TextPopup),this,false);
+            ObjectPooling.Instance.PoolObject(this,false);
             StartCoroutine(DisableTimer());
         }
         private void OnDisable()
         {
-            ObjectPooling.Instance.PoolObject(typeof(TextPopup),this);
+            ObjectPooling.Instance.PoolObject(this);
             Debug.Log("OnDisable");
         }
         
