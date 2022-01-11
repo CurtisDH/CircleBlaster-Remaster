@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Utility
 {
     [RequireComponent(typeof(ObjectPooling))]
-    public class ObjectPooling : MonoSingleton<ObjectPooling>
+    public class ObjectPooling : NetworkSingleton<ObjectPooling>
     {
         private Dictionary<Type, List<Component>> _pooledObjects = new();
         public List<GameObject> prefabs;
@@ -37,7 +37,7 @@ namespace Utility
                 if (_pooledObjects[componentType].Count > 0 && _pooledObjects[componentType][0] != null)
                 {
                     var objectToReturn = _pooledObjects[componentType][0] as T;
-                    PoolObject(objectToReturn,false);
+                    PoolObject(objectToReturn, false);
                     return objectToReturn;
                 }
             }

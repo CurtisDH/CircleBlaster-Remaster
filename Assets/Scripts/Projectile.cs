@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Utility;
 
-public class Projectile : MonoBehaviour
+public class Projectile : NetworkBehaviour
 {
     private int _teamID;
     [SerializeField] private float projectileSpeed;
@@ -45,14 +45,21 @@ public class Projectile : MonoBehaviour
 
     private void OnEnable()
     {
-        if (!networkObject.IsSpawned)
-        {
+        if (!networkObject.IsSpawned && IsServer)
             networkObject.Spawn();
-        }
     }
 
     private void OnDisable()
-    {
+    {       
+        //TODO fix
+        //I don't think pooling works properly like this..
+        DespawnProjectileServerRPC();
         ObjectPooling.Instance.PoolObject(this);
+    }
+
+    [ServerRpc]
+    private void DespawnProjectileServerRPC()
+    {
+        networkObject.Despawn();
     }
 }
