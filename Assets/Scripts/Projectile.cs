@@ -9,25 +9,32 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private float projectileSpeed;
 
     [SerializeField] public NetworkObject networkObject;
+
+    public bool IsClientProjectile()
+    {
+        return IsClient && !IsServer;
+    }
+
     private int _pierceLevel;
     [SerializeField] private Vector2 startPos;
+    private Transform _weaponTransform;
 
     private const int DespawnRange = 50;
 
     private const int SpeedIncrement = 2;
 
+    //get rid of this, its modifiying the prefab. Just do it once we pull the object
     public void ProjectileSetup(int teamId, float speed, int pierce, Transform playerWeaponTransform)
     {
+        _weaponTransform = playerWeaponTransform;
         _teamID = teamId;
         projectileSpeed = speed + SpeedIncrement;
         _pierceLevel = pierce;
 
         var projectileTransform = transform;
-        var weaponPosition = playerWeaponTransform.position;
-
-        projectileTransform.rotation = playerWeaponTransform.rotation;
-        projectileTransform.position = weaponPosition;
-        startPos = weaponPosition;
+        projectileTransform.rotation = _weaponTransform.rotation;
+        projectileTransform.position = _weaponTransform.position;
+        startPos = _weaponTransform.position;
     }
 
     private void Update()
@@ -45,15 +52,15 @@ public class Projectile : NetworkBehaviour
 
     private void OnEnable()
     {
-        if (!networkObject.IsSpawned && IsServer)
-            networkObject.Spawn();
+        // if (!networkObject.IsSpawned && IsServer)
+        //     networkObject.Spawn();
     }
 
     private void OnDisable()
-    {       
+    {
         //TODO fix
         //I don't think pooling works properly like this..
-        DespawnProjectileServerRPC();
+        //DespawnProjectileServerRPC();
         ObjectPooling.Instance.PoolObject(this);
     }
 

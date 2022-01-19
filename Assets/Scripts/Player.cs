@@ -33,12 +33,17 @@ public class Player : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeybindManager.Instance.shootPrimary))
         {
-            RequestProjectileSpawnServerRPC();
+            //Client
+            var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
+            projectile.gameObject.SetActive(true);
+            projectile.ProjectileSetup(teamID,moveSpeed,1,weapon.transform);
+            //Server
+            //RequestProjectileSpawnServerRPC();
         }
     }
     
     [ServerRpc]
-    public void RequestProjectileSpawnServerRPC()
+    private void RequestProjectileSpawnServerRPC()
     {
         var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
         projectile.ProjectileSetup(teamID, moveSpeed, 1, weapon.transform);
