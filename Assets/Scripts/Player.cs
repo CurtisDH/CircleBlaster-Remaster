@@ -9,6 +9,10 @@ public class Player : NetworkBehaviour
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
     [SerializeField] private PlayerWeapon weapon;
 
+
+    //Used for retrieving the network pool.
+    [SerializeField] private GameObject projectilePrefab;
+
     [SerializeField] float moveSpeed = 10;
 
     private void OnEnable()
@@ -35,19 +39,31 @@ public class Player : NetworkBehaviour
         {
             //Client
             var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
-            projectile.gameObject.SetActive(true);
-            projectile.ProjectileSetup(teamID,moveSpeed,1,weapon.transform);
+            projectile.ProjectileSetup(teamID,moveSpeed,1);
+            
+            //The server version shouldn't require this as it's simply to show the position to clients
+            //i.e. The hit reg should be client sided not server sided.
+            SetupProjectilePosition(projectile.gameObject);
             //Server
-            //RequestProjectileSpawnServerRPC();
+            RequestProjectileSpawnServerRPC();
         }
     }
     
     [ServerRpc]
     private void RequestProjectileSpawnServerRPC()
     {
-        var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
-        projectile.ProjectileSetup(teamID, moveSpeed, 1, weapon.transform);
-        projectile.gameObject.SetActive(true);
+        var projectile = NetworkObjectPooling.Instance.GetNetworkObject(projectilePrefab);
+        SetupProjectilePosition(projectile.gameObject);
+        projectile.Spawn();
+    }
+
+    private void SetupProjectilePosition(GameObject projectile)
+    {
+        projectile.SetActive(true);
+        var projectileTransform = projectile.transform;
+        var weaponTransform = weapon.transform;
+        projectileTransform.rotation = weaponTransform.rotation;
+        projectileTransform.position = weaponTransform.position;
     }
 
     private void PlayerMovement()

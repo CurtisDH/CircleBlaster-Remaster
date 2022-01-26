@@ -9,6 +9,8 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private float projectileSpeed;
 
     [SerializeField] public NetworkObject networkObject;
+    
+    //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
     private bool _isServerProjectile = true;
     public bool IsClientProjectile()
     {
@@ -28,17 +30,11 @@ public class Projectile : NetworkBehaviour
         _isServerProjectile = false;
     }
     
-    public void ProjectileSetup(int teamId, float speed, int pierce, Transform playerWeaponTransform)
+    public void ProjectileSetup(int teamId, float speed, int pierce)
     {
-        _weaponTransform = playerWeaponTransform;
         _teamID = teamId;
         projectileSpeed = speed + SpeedIncrement;
         _pierceLevel = pierce;
-
-        var projectileTransform = transform;
-        projectileTransform.rotation = _weaponTransform.rotation;
-        projectileTransform.position = _weaponTransform.position;
-        startPos = _weaponTransform.position;
     }
 
     private void Update()
@@ -56,6 +52,7 @@ public class Projectile : NetworkBehaviour
 
     private void OnEnable()
     {
+        startPos = transform.position;
         //We create an object pool before listening. This determines if its a server or a client pool. 
         if (!NetworkManager.IsListening)
         {

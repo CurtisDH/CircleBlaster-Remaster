@@ -189,7 +189,7 @@ MonoBehaviour:
   teamID: 0
   teamColourSpriteRenderer: {fileID: 1390246452733342425}
   weapon: {fileID: 8522134931922229729}
-  playerProjectilePrefab: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
+  projectilePrefab: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
   moveSpeed: 5
 --- !u!114 &1620164478511431032
 MonoBehaviour:
