@@ -9,7 +9,7 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private float projectileSpeed;
 
     [SerializeField] public NetworkObject networkObject;
-
+    private bool _isServerProjectile = true;
     public bool IsClientProjectile()
     {
         return IsClient && !IsServer;
@@ -23,7 +23,11 @@ public class Projectile : NetworkBehaviour
 
     private const int SpeedIncrement = 2;
 
-    //get rid of this, its modifiying the prefab. Just do it once we pull the object
+    public void SetServerProjectileStatus(bool isServerProjectile)
+    {
+        _isServerProjectile = false;
+    }
+    
     public void ProjectileSetup(int teamId, float speed, int pierce, Transform playerWeaponTransform)
     {
         _weaponTransform = playerWeaponTransform;
@@ -52,8 +56,11 @@ public class Projectile : NetworkBehaviour
 
     private void OnEnable()
     {
-        // if (!networkObject.IsSpawned && IsServer)
-        //     networkObject.Spawn();
+        //We create an object pool before listening. This determines if its a server or a client pool. 
+        if (!NetworkManager.IsListening)
+        {
+            _isServerProjectile = false;
+        }
     }
 
     private void OnDisable()
@@ -61,7 +68,10 @@ public class Projectile : NetworkBehaviour
         //TODO fix
         //I don't think pooling works properly like this..
         //DespawnProjectileServerRPC();
-        ObjectPooling.Instance.PoolObject(this);
+        if (!_isServerProjectile)
+        {
+            ObjectPooling.Instance.PoolObject(this);
+        }
     }
 
     [ServerRpc]

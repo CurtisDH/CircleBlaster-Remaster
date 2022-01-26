@@ -72,8 +72,10 @@ namespace Utility
             {
                 var prefabComp = prefabs[i].GameObject.GetComponent<T>();
                 if (prefabComp is null || prefabComp.GetType() != componentType) continue;
-                Instantiate((Object)prefabComp.gameObject);
-                return prefabComp;
+                var obj = Instantiate(prefabComp.gameObject);
+                obj.name = $"{componentType} CLIENTPOOL";
+                var objComp = obj.GetComponent<T>();
+                return objComp;
             }
 
             return null; // TODO 

@@ -24,6 +24,10 @@ namespace Utility
 
         private bool _hasInitialized;
 
+        public void Test()
+        {
+            OnNetworkSpawn();
+        }
         public override void OnNetworkSpawn()
         {
             InitializePool();
@@ -109,6 +113,7 @@ namespace Utility
             for (int i = 0; i < prewarmCount; i++)
             {
                 var go = CreateInstance(prefab);
+                go.name += "SERVER";
                 ReturnNetworkObject(go.GetComponent<NetworkObject>(), prefab);
             }
 

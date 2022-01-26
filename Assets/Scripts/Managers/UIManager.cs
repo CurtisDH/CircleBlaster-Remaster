@@ -33,6 +33,7 @@ namespace Managers
             {
                 Debug.Log("Started");
                 NetworkManager.Singleton.StartHost();
+                NetworkObjectPooling.Instance.Test();
                 connectionManager.gameObject.SetActive(true);
                 return;
             }

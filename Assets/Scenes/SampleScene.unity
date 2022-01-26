@@ -488,7 +488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - GameObject: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
-    PreCacheCount: 250
+    PreCacheCount: 5
 --- !u!114 &827200835
 MonoBehaviour:
   m_ObjectHideFlags: 0
