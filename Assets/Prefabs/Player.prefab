@@ -191,6 +191,7 @@ MonoBehaviour:
   weapon: {fileID: 8522134931922229729}
   projectilePrefab: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
   moveSpeed: 5
+  clientID: 0
 --- !u!114 &1620164478511431032
 MonoBehaviour:
   m_ObjectHideFlags: 0

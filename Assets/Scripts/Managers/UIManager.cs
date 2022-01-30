@@ -22,6 +22,11 @@ namespace Managers
 
         private Button _stopButton;
 
+        public bool IsHosting()
+        {
+            return _hosting;
+        }
+
         public void StartHost()
         {
             _hosting = !_hosting;

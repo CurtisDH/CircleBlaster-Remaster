@@ -1,7 +1,10 @@
+using System;
+using System.Collections;
 using Managers;
 using Unity.Netcode;
 using UnityEngine;
 using Utility;
+using Utility.Text;
 
 public class Player : NetworkBehaviour
 {
@@ -15,17 +18,44 @@ public class Player : NetworkBehaviour
 
     [SerializeField] float moveSpeed = 10;
 
+    [SerializeField] private ulong clientID;
+
+    private bool _playerReady;
+    private bool _playerCanMove;
+
     private void OnEnable()
     {
+        Debug.Log("PLAYER:::: ONENABLE");
+        //PlayerConnectionManager.Instance.OnConnectionUpdate += SetupPlayerVariables;
+        StartCoroutine(InitialisePlayer());
         //TODO Allow customisation within a UI menu.
         teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
         weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
         weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
     }
+    
+    IEnumerator InitialisePlayer()
+    {
+        while (!_playerReady)
+        {
+            GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loading...",
+                transform.position, 1.5f, 2, Color.yellow,
+                0.25f);
+            yield return new WaitForSeconds(2);
+            //Only updates for the server
+            clientID = (ulong)PlayerConnectionManager.Instance.mostRecentClientConnectionID.Value;
+            _playerReady = true;
+        }
+
+        GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loaded",
+            transform.position, 1.5f, 2, Color.green, 0.25f);
+        _playerCanMove = true;
+    }
+
 
     private void Update()
     {
-        if (IsClient && IsOwner)
+        if (IsClient && IsOwner && _playerCanMove)
         {
             weapon.UpdatePosition();
             PlayerMovement();
@@ -39,22 +69,47 @@ public class Player : NetworkBehaviour
         {
             //Client
             var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
-            projectile.ProjectileSetup(teamID,moveSpeed,1);
-            
-            //The server version shouldn't require this as it's simply to show the position to clients
-            //i.e. The hit reg should be client sided not server sided.
+            projectile.ProjectileSetup(teamID, moveSpeed, 1);
+
+            projectile.ProjectileSetup(teamID, moveSpeed, 1);
+            projectile.SetServerProjectileStatus(false);
             SetupProjectilePosition(projectile.gameObject);
             //Server
-            RequestProjectileSpawnServerRPC();
+            var id = NetworkManager.LocalClientId;
+            if (UIManager.Instance.IsHosting())
+            {
+                id = UInt64.MaxValue;
+            }
+
+            Debug.Log("Sending ID to RPC:" + id);
+            //I've also tried just sending the clientID but it always receives 0.
+            RequestProjectileSpawnServerRPC(id);
         }
     }
-    
+
     [ServerRpc]
-    private void RequestProjectileSpawnServerRPC()
+    private void RequestProjectileSpawnServerRPC(ulong clientID)
     {
+        var id = clientID;
         var projectile = NetworkObjectPooling.Instance.GetNetworkObject(projectilePrefab);
         SetupProjectilePosition(projectile.gameObject);
         projectile.Spawn();
+        //Stops the client from seeing the server sided projectile they just fired.
+        if (id != ulong.MaxValue)
+        {
+            projectile.NetworkHide(id);
+        }
+
+    }
+
+    public struct ClientIDMessage : INetworkSerializable
+    {
+        public ulong myUlong;
+
+        void INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T> serializer)
+        {
+            serializer.SerializeValue(ref myUlong);
+        }
     }
 
     private void SetupProjectilePosition(GameObject projectile)

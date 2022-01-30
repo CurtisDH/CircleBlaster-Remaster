@@ -20,7 +20,7 @@ namespace Utility
 
         private HashSet<GameObject> _prefabs = new HashSet<GameObject>();
 
-        Dictionary<GameObject, Queue<NetworkObject>> pooledObjects = new Dictionary<GameObject, Queue<NetworkObject>>();
+        private Dictionary<GameObject, Queue<NetworkObject>> pooledObjects = new Dictionary<GameObject, Queue<NetworkObject>>();
 
         private bool _hasInitialized;
 
@@ -28,6 +28,7 @@ namespace Utility
         {
             OnNetworkSpawn();
         }
+
         public override void OnNetworkSpawn()
         {
             InitializePool();
@@ -127,9 +128,6 @@ namespace Utility
             return Instantiate(prefab);
         }
 
-        /// <summary>
-        /// This matches the signature of <see cref="NetworkSpawnManager.SpawnHandlerDelegate"/>
-        /// </summary>
         /// <param name="prefab"></param>
         /// <param name="position"></param>
         /// <param name="rotation"></param>
@@ -154,14 +152,13 @@ namespace Utility
 
             go.transform.position = position;
             go.transform.rotation = rotation;
-
             return networkObject;
         }
 
         /// <summary>
         /// Registers all objects in <see cref="pooledPrefabsList"/> to the cache.
         /// </summary>
-        public void InitializePool()
+        private void InitializePool()
         {
             if (_hasInitialized) return;
             foreach (var configObject in pooledPrefabsList)
@@ -175,7 +172,7 @@ namespace Utility
         /// <summary>
         /// Unregisters all objects in <see cref="pooledPrefabsList"/> from the cache.
         /// </summary>
-        public void ClearPool()
+        private void ClearPool()
         {
             foreach (var prefab in _prefabs)
             {
@@ -188,13 +185,13 @@ namespace Utility
     }
 
     [Serializable]
-    struct PoolConfigObject
+    internal struct PoolConfigObject
     {
         public GameObject Prefab;
         public int PrewarmCount;
     }
 
-    class PooledPrefabInstanceHandler : INetworkPrefabInstanceHandler
+    internal class PooledPrefabInstanceHandler : INetworkPrefabInstanceHandler
     {
         GameObject m_Prefab;
         NetworkObjectPooling m_Pool;

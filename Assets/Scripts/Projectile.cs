@@ -9,9 +9,10 @@ public class Projectile : NetworkBehaviour
     [SerializeField] private float projectileSpeed;
 
     [SerializeField] public NetworkObject networkObject;
-    
+
     //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
     private bool _isServerProjectile = true;
+
     public bool IsClientProjectile()
     {
         return IsClient && !IsServer;
@@ -60,6 +61,16 @@ public class Projectile : NetworkBehaviour
         }
     }
 
+    private void HitRegistration()
+    {
+        if (!_isServerProjectile)
+        {
+            // do hit reg
+            DespawnProjectileServerRPC();
+            //Despawn the network object particles etc.
+        }
+    }
+
     private void OnDisable()
     {
         //TODO fix
@@ -74,6 +85,7 @@ public class Projectile : NetworkBehaviour
     [ServerRpc]
     private void DespawnProjectileServerRPC()
     {
+        //Particle display
         networkObject.Despawn();
     }
 }

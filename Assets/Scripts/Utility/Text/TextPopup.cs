@@ -20,7 +20,6 @@ namespace Utility.Text
         private void OnDisable()
         {
             ObjectPooling.Instance.PoolObject(this);
-            Debug.Log("OnDisable");
         }
         
         void Update()

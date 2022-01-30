@@ -298,6 +298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab291e975e2952340aead5cbe93648d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  activeClientIDs: 
 --- !u!4 &68971650
 Transform:
   m_ObjectHideFlags: 0
@@ -488,6 +489,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - GameObject: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
+    PreCacheCount: 5
+  - GameObject: {fileID: 5174059667085638991, guid: 1de5b5825753005458e36abed11224f8, type: 3}
     PreCacheCount: 5
 --- !u!114 &827200835
 MonoBehaviour:

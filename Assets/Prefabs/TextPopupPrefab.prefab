@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 3030088328133044313}
   - component: {fileID: 7788412803131269669}
   - component: {fileID: 4376104124806829034}
+  - component: {fileID: 2131172042735825033}
   m_Layer: 0
-  m_Name: Test
+  m_Name: TextPopupPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,8 +135,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -172,3 +173,18 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 7788412803131269669}
   m_maskType: 0
+--- !u!114 &2131172042735825033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5174059667085638991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe530341c7a720c48994748987f9892b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textMeshComponent: {fileID: 4376104124806829034}
+  duration: 3
+  speed: 1
