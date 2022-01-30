@@ -94,17 +94,7 @@ public class Player : NetworkBehaviour
         {
             projectile.NetworkHide(id);
         }
-
-    }
-
-    public struct ClientIDMessage : INetworkSerializable
-    {
-        public ulong myUlong;
-
-        void INetworkSerializable.NetworkSerialize<T>(BufferSerializer<T> serializer)
-        {
-            serializer.SerializeValue(ref myUlong);
-        }
+        SpawnManager.Instance.SpawnEnemy();
     }
 
     private void SetupProjectilePosition(GameObject projectile)

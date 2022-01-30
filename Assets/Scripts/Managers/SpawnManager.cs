@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Enemy;
 using Unity.Netcode;
 using UnityEngine;
 using Utility;
@@ -10,7 +11,7 @@ namespace Managers
 {
     public class SpawnManager : NetworkSingleton<SpawnManager>
     {
-        [SerializeField] private GameObject enemyPrefab;
+        [SerializeField] private GameObject enemyTankPrefab;
 
         [SerializeField] private IReadOnlyList<NetworkClient> activePlayerClients;
 
@@ -18,18 +19,19 @@ namespace Managers
 
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
-        [ServerRpc]
-        private void SpawnEnemyServerRPC()
+        public void SpawnEnemy()
         {
-            var obj = Instantiate(enemyPrefab);
-            obj.transform.position = SetSpawnPosition();
+            var enemy = NetworkObjectPooling.Instance.GetNetworkObject(enemyTankPrefab);
+            enemy.transform.position = transform.position = SetSpawnPosition();
+
+            enemy.Spawn();
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) && UIManager.Instance.IsHosting())
             {
-                SpawnEnemyServerRPC();
+                SpawnEnemy();
             }
         }
 
@@ -102,6 +104,23 @@ namespace Managers
             // visualRadius.transform.localScale = Vector3.one;
             // visualRadius.transform.position = centerPos;
             return centerPos;
+        }
+        
+        public Transform GetClosestPlayer(Vector3 pos)
+        {
+            float distance = float.MaxValue;
+            Transform t = null;
+            foreach (var client in activePlayerClients)
+            {
+                float d = Vector3.Distance(pos, client.PlayerObject.transform.position);
+                if (d < distance)
+                {
+                    distance = d;
+                    t = client.PlayerObject.transform;
+                }
+            }
+
+            return t;
         }
     }
 }

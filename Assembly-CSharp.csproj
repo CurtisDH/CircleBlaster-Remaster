@@ -43,6 +43,7 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\Managers\UIManager.cs" />
      <Compile Include="Assets\Scripts\Projectile.cs" />
+     <Compile Include="Assets\Scripts\Enemy\EnemyDefault.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\TextPopup.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\GenerateWorldSpaceText.cs" />
      <Compile Include="Assets\Scripts\Utility\ObjectPooling.cs" />
@@ -50,12 +51,11 @@
      <Compile Include="Assets\Scripts\Managers\KeybindManager.cs" />
      <Compile Include="Assets\Scripts\Utility\NetworkObjectPooling.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerManager.cs" />
+     <Compile Include="Assets\Scripts\Enemy\EnemyBase.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerConnectionManager.cs" />
+     <Compile Include="Assets\Scripts\Managers\SpawnManager.cs" />
      <Compile Include="Assets\Scripts\Utility\MonoSingleton.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
-     <Compile Include="Assets\Scripts\Managers\SpawnManager.cs" />
-     <Compile Include="Assets\Scripts\Enemy\EnemyBase.cs" />
-     <Compile Include="Assets\Scripts\Enemy\EnemyDefault.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

@@ -220,7 +220,12 @@ MonoBehaviour:
       SourcePrefabToOverride: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
       SourceHashToOverride: 0
       OverridingTargetPrefab: {fileID: 0}
-    TickRate: 30
+    - Override: 0
+      Prefab: {fileID: 7690839101265195202, guid: d5e86494d7fe1dd4fb52eff3059d03a0, type: 3}
+      SourcePrefabToOverride: {fileID: 0}
+      SourceHashToOverride: 0
+      OverridingTargetPrefab: {fileID: 0}
+    TickRate: 35
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
@@ -360,7 +365,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da6a86e16ec9eb4fb84ab9283f0c10d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyPrefab: {fileID: 0}
+  enemyTankPrefab: {fileID: 7690839101265195202, guid: d5e86494d7fe1dd4fb52eff3059d03a0, type: 3}
   visualRadius: {fileID: 1802265662}
   minSpawnRadiusSize: 25
 --- !u!1 &309054605
@@ -555,6 +560,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pooledPrefabsList:
   - Prefab: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
+    PrewarmCount: 250
+  - Prefab: {fileID: 7690839101265195202, guid: d5e86494d7fe1dd4fb52eff3059d03a0, type: 3}
     PrewarmCount: 250
 --- !u!114 &1472685764
 MonoBehaviour:
