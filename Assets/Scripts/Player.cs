@@ -25,8 +25,6 @@ public class Player : NetworkBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("PLAYER:::: ONENABLE");
-        //PlayerConnectionManager.Instance.OnConnectionUpdate += SetupPlayerVariables;
         StartCoroutine(InitialisePlayer());
         //TODO Allow customisation within a UI menu.
         teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
@@ -80,9 +78,6 @@ public class Player : NetworkBehaviour
             {
                 id = UInt64.MaxValue;
             }
-
-            Debug.Log("Sending ID to RPC:" + id);
-            //I've also tried just sending the clientID but it always receives 0.
             RequestProjectileSpawnServerRPC(id);
         }
     }
