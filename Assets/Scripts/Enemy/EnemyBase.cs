@@ -26,7 +26,7 @@ namespace Enemy
 
         private void OnEnable()
         {
-            if (UIManager.Instance.IsHosting())
+            if (IsServer)
             {
                 health.OnValueChanged += CheckIfDead;
                 Projectile.OnProjectileHitEvent += OnProjectileHit;
@@ -49,6 +49,7 @@ namespace Enemy
 
             colourConfigured = true;
         }
+
         [ServerRpc]
         private void OnHitServerRpc(float damage)
         {
@@ -57,9 +58,9 @@ namespace Enemy
 
         private void OnDisable()
         {
-            if (!UIManager.Instance.IsHosting()) return;
-            
-            
+            if (!IsServer) return;
+
+
             health.OnValueChanged -= CheckIfDead;
             Projectile.OnProjectileHitEvent -= OnProjectileHit;
         }
@@ -84,10 +85,8 @@ namespace Enemy
         private void DespawnEnemyServerRpc()
         {
             //Spawn Manager particles?
-            if (UIManager.Instance.IsHosting())
-            {
-                networkObject.Despawn();
-            }
+
+            networkObject.Despawn();
         }
 
 

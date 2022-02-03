@@ -74,19 +74,22 @@ public class Projectile : NetworkBehaviour
     {
         if (!col.CompareTag("Enemy")) return;
 
-
-        var target = col.gameObject;
-        hitTarget = target;
-        if (!_isServerProjectile)
-            projectileDamage = 0;
-
-        OnProjectileHitEvent?.Invoke(target, projectileDamage);
-
-        if (_isServerProjectile && UIManager.Instance.IsHosting()) //Might create issues with dedicated?
+        if (IsServer)
         {
-            DespawnProjectileServerRPC();
-            return;
+            var target = col.gameObject;
+            hitTarget = target;
+            if (!_isServerProjectile)
+                projectileDamage = 0;
+
+            OnProjectileHitEvent?.Invoke(target, projectileDamage);
+
+            if (_isServerProjectile)
+            {
+                DespawnProjectileServerRPC();
+                return;
+            }
         }
+
 
         gameObject.SetActive(false);
     }
