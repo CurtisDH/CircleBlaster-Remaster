@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 1776860090015622910}
   - component: {fileID: 1657548665486300553}
   - component: {fileID: -8495596148090576586}
+  - component: {fileID: 3378905246144905008}
+  - component: {fileID: 6435588481673933969}
   m_Layer: 0
   m_Name: Projectile
   m_TagString: Untagged
@@ -25,8 +27,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3164235778794910943}
-  m_LocalRotation: {x: -0, y: -0, z: -0.93797433, w: 0.34670484}
-  m_LocalPosition: {x: 0.45575494, y: 0.39024028, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0.9133466, w: 0.4071831}
+  m_LocalPosition: {x: 0.40104553, y: -0.44627634, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -34,7 +36,7 @@ Transform:
   - {fileID: 7364206886445048337}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 131.944}
 --- !u!114 &1657548665486300553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48,8 +50,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   projectileSpeed: 7
+  projectileDamage: 1
   networkObject: {fileID: -8495596148090576586}
-  startPos: {x: 0.45575494, y: 0.39024028}
+  hitTarget: {fileID: 0}
+  _isServerProjectile: 1
+  startPos: {x: 0.40104553, y: -0.44627634}
 --- !u!114 &-8495596148090576586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,6 +71,43 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
+--- !u!58 &3378905246144905008
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3164235778794910943}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.125
+--- !u!50 &6435588481673933969
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3164235778794910943}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 7
 --- !u!1 &6536448407822096177
 GameObject:
   m_ObjectHideFlags: 0

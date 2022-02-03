@@ -22,6 +22,11 @@ namespace Managers
 
         private Button _stopButton;
 
+        public bool IsHosting()
+        {
+            return _hosting;
+        }
+
         public void StartHost()
         {
             _hosting = !_hosting;
@@ -33,6 +38,7 @@ namespace Managers
             {
                 Debug.Log("Started");
                 NetworkManager.Singleton.StartHost();
+                NetworkObjectPooling.Instance.Test();
                 connectionManager.gameObject.SetActive(true);
                 return;
             }

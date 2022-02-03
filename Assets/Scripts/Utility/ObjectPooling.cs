@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Utility
 {
@@ -8,7 +11,29 @@ namespace Utility
     public class ObjectPooling : NetworkSingleton<ObjectPooling>
     {
         private Dictionary<Type, List<Component>> _pooledObjects = new();
-        public List<GameObject> prefabs;
+        [SerializeField] private List<PoolConfig> prefabs;
+        [Serializable]
+        public struct PoolConfig
+        {
+            public GameObject GameObject;
+            public int PreCacheCount;
+        }
+        public IEnumerable<GameObject> GetPrefabs()
+        {
+            return prefabs.Select(poolConfig => poolConfig.GameObject).ToList();
+        }
+
+        private void OnEnable()
+        {
+            foreach (var config in prefabs)
+            {
+                for (int i = 0; i <= config.PreCacheCount; i++)
+                {
+                    var obj = Instantiate(config.GameObject, this.transform, true);
+                    obj.SetActive(false);
+                }
+            }
+        }
 
         public void PoolObject(Component component, bool add = true)
         {
@@ -45,10 +70,12 @@ namespace Utility
             //If we don't have any available in the pool we create one and return it to the original
             for (var i = 0; i <= prefabs.Count; i++)
             {
-                var prefabComp = prefabs[i].GetComponent<T>();
+                var prefabComp = prefabs[i].GameObject.GetComponent<T>();
                 if (prefabComp is null || prefabComp.GetType() != componentType) continue;
-                Instantiate(prefabComp.gameObject);
-                return prefabComp;
+                var obj = Instantiate(prefabComp.gameObject);
+                obj.name = $"{componentType} CLIENTPOOL";
+                var objComp = obj.GetComponent<T>();
+                return objComp;
             }
 
             return null; // TODO 

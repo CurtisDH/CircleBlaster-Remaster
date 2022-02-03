@@ -1,7 +1,11 @@
+using System;
+using System.Collections;
 using Managers;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using Utility;
+using Utility.Text;
 
 public class Player : NetworkBehaviour
 {
@@ -9,19 +13,47 @@ public class Player : NetworkBehaviour
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
     [SerializeField] private PlayerWeapon weapon;
 
+
+    //Used for retrieving the network pool.
+    [SerializeField] private GameObject projectilePrefab;
+
     [SerializeField] float moveSpeed = 10;
+
+    [SerializeField] private ulong clientID;
+
+    private bool _playerReady;
+    private bool _playerCanMove;
 
     private void OnEnable()
     {
+        StartCoroutine(InitialisePlayer());
         //TODO Allow customisation within a UI menu.
         teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
         weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
         weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
     }
+    
+    private IEnumerator InitialisePlayer()
+    {
+        while (!_playerReady)
+        {
+            GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loading...",
+                transform.position, 1.5f, 2, Color.yellow,
+                0.25f);
+            yield return new WaitForSeconds(2);
+            //Only updates for the server
+            clientID = (ulong)PlayerConnectionManager.Instance.mostRecentClientConnectionID.Value;
+            _playerReady = true;
+        }
+
+        GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loaded",
+            transform.position, 1.5f, 2, Color.green, 0.25f);
+        _playerCanMove = true;
+    }
 
     private void Update()
     {
-        if (IsClient && IsOwner)
+        if (IsClient && IsOwner && _playerCanMove)
         {
             weapon.UpdatePosition();
             PlayerMovement();
@@ -33,16 +65,44 @@ public class Player : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeybindManager.Instance.shootPrimary))
         {
-            RequestProjectileSpawnServerRPC();
+            //Client
+            var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
+            projectile.ProjectileSetup(teamID, moveSpeed, 1);
+
+            projectile.ProjectileSetup(teamID, moveSpeed, 1);
+            projectile.SetServerProjectileStatus(false);
+            SetupProjectilePosition(projectile.gameObject);
+            //Server
+            var id = NetworkManager.LocalClientId;
+            if (UIManager.Instance.IsHosting())
+            {
+                id = UInt64.MaxValue;
+            }
+            RequestProjectileSpawnServerRPC(id);
         }
     }
-    
+
     [ServerRpc]
-    public void RequestProjectileSpawnServerRPC()
+    private void RequestProjectileSpawnServerRPC(ulong clientID)
     {
-        var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
-        projectile.ProjectileSetup(teamID, moveSpeed, 1, weapon.transform);
-        projectile.gameObject.SetActive(true);
+        var id = clientID;
+        var projectile = NetworkObjectPooling.Instance.GetNetworkObject(projectilePrefab);
+        SetupProjectilePosition(projectile.gameObject);
+        projectile.Spawn();
+        //Stops the client from seeing the server sided projectile they just fired.
+        if (id != ulong.MaxValue)
+        {
+            projectile.NetworkHide(id);
+        }
+    }
+
+    private void SetupProjectilePosition(GameObject projectile)
+    {
+        projectile.SetActive(true);
+        var projectileTransform = projectile.transform;
+        var weaponTransform = weapon.transform;
+        projectileTransform.rotation = weaponTransform.rotation;
+        projectileTransform.position = weaponTransform.position;
     }
 
     private void PlayerMovement()

@@ -1,5 +1,8 @@
 using System;
+using Enemy;
+using Managers;
 using Unity.Netcode;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 
@@ -7,27 +10,41 @@ public class Projectile : NetworkBehaviour
 {
     private int _teamID;
     [SerializeField] private float projectileSpeed;
+    [SerializeField] private float projectileDamage = 1;
 
     [SerializeField] public NetworkObject networkObject;
+    [SerializeField] private GameObject hitTarget;
+
+    public delegate void ProjectileHitEvent(GameObject target, float damage);
+
+    public static event ProjectileHitEvent OnProjectileHitEvent;
+
+    //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
+    [SerializeField] private bool _isServerProjectile = true;
+
+    public bool IsClientProjectile()
+    {
+        return IsClient && !IsServer;
+    }
+
     private int _pierceLevel;
     [SerializeField] private Vector2 startPos;
+    private Transform _weaponTransform;
 
     private const int DespawnRange = 50;
 
     private const int SpeedIncrement = 2;
 
-    public void ProjectileSetup(int teamId, float speed, int pierce, Transform playerWeaponTransform)
+    public void SetServerProjectileStatus(bool isServerProjectile)
+    {
+        _isServerProjectile = isServerProjectile;
+    }
+
+    public void ProjectileSetup(int teamId, float speed, int pierce)
     {
         _teamID = teamId;
         projectileSpeed = speed + SpeedIncrement;
         _pierceLevel = pierce;
-
-        var projectileTransform = transform;
-        var weaponPosition = playerWeaponTransform.position;
-
-        projectileTransform.rotation = playerWeaponTransform.rotation;
-        projectileTransform.position = weaponPosition;
-        startPos = weaponPosition;
     }
 
     private void Update()
@@ -45,21 +62,52 @@ public class Projectile : NetworkBehaviour
 
     private void OnEnable()
     {
-        if (!networkObject.IsSpawned && IsServer)
-            networkObject.Spawn();
+        startPos = transform.position;
+        //We create an object pool before listening. This determines if its a server or a client pool. 
+        if (!NetworkManager.IsListening)
+        {
+            _isServerProjectile = false;
+        }
     }
 
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        if (!col.CompareTag("Enemy")) return;
+
+        if (IsServer)
+        {
+            var target = col.gameObject;
+            hitTarget = target;
+            if (!_isServerProjectile)
+                projectileDamage = 0;
+
+            OnProjectileHitEvent?.Invoke(target, projectileDamage);
+
+            if (_isServerProjectile)
+            {
+                DespawnProjectileServerRPC();
+                return;
+            }
+        }
+
+
+        gameObject.SetActive(false);
+    }
+
+
     private void OnDisable()
-    {       
-        //TODO fix
-        //I don't think pooling works properly like this..
-        DespawnProjectileServerRPC();
-        ObjectPooling.Instance.PoolObject(this);
+    {
+        if (!_isServerProjectile)
+        {
+            ObjectPooling.Instance.PoolObject(this);
+            return;
+        }
     }
 
     [ServerRpc]
     private void DespawnProjectileServerRPC()
     {
+        //TODO Particle display
         networkObject.Despawn();
     }
 }
