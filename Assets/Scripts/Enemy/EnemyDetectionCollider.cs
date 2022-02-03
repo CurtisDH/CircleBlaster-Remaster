@@ -27,7 +27,6 @@ namespace Enemy
 
         private void OnTriggerEnter2D(Collider2D col)
         {
-            Debug.Log("Collision");
             if (col.gameObject.CompareTag("Player"))
             {
                 if (nearbyPlayerTransforms.Contains(col.transform))
@@ -47,7 +46,6 @@ namespace Enemy
 
         private void OnTriggerExit2D(Collider2D col)
         {
-            Debug.Log("ExitCollision");
             if (col.gameObject.CompareTag("Player"))
             {
                 _enemyBase.closestPlayerTransform =

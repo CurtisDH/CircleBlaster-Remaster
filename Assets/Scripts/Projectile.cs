@@ -1,5 +1,8 @@
 using System;
+using Enemy;
+using Managers;
 using Unity.Netcode;
+using UnityEditor;
 using UnityEngine;
 using Utility;
 
@@ -7,11 +10,17 @@ public class Projectile : NetworkBehaviour
 {
     private int _teamID;
     [SerializeField] private float projectileSpeed;
+    [SerializeField] private float projectileDamage = 1;
 
     [SerializeField] public NetworkObject networkObject;
+    [SerializeField] private GameObject hitTarget;
+
+    public delegate void ProjectileHitEvent(GameObject target, float damage);
+
+    public static event ProjectileHitEvent OnProjectileHitEvent;
 
     //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
-    private bool _isServerProjectile = true;
+    [SerializeField] private bool _isServerProjectile = true;
 
     public bool IsClientProjectile()
     {
@@ -28,9 +37,9 @@ public class Projectile : NetworkBehaviour
 
     public void SetServerProjectileStatus(bool isServerProjectile)
     {
-        _isServerProjectile = false;
+        _isServerProjectile = isServerProjectile;
     }
-    
+
     public void ProjectileSetup(int teamId, float speed, int pierce)
     {
         _teamID = teamId;
@@ -61,31 +70,41 @@ public class Projectile : NetworkBehaviour
         }
     }
 
-    private void HitRegistration()
+    private void OnTriggerEnter2D(Collider2D col)
     {
+        if (!col.CompareTag("Enemy")) return;
+
+
+        var target = col.gameObject;
+        hitTarget = target;
         if (!_isServerProjectile)
+            projectileDamage = 0;
+
+        OnProjectileHitEvent?.Invoke(target, projectileDamage);
+
+        if (_isServerProjectile && UIManager.Instance.IsHosting()) //Might create issues with dedicated?
         {
-            // do hit reg
             DespawnProjectileServerRPC();
-            //Despawn the network object particles etc.
+            return;
         }
+
+        gameObject.SetActive(false);
     }
+
 
     private void OnDisable()
     {
-        //TODO fix
-        //I don't think pooling works properly like this..
-        //DespawnProjectileServerRPC();
         if (!_isServerProjectile)
         {
             ObjectPooling.Instance.PoolObject(this);
+            return;
         }
     }
 
     [ServerRpc]
     private void DespawnProjectileServerRPC()
     {
-        //Particle display
+        //TODO Particle display
         networkObject.Despawn();
     }
 }

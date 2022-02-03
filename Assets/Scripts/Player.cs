@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Managers;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using Utility;
 using Utility.Text;
@@ -50,7 +51,6 @@ public class Player : NetworkBehaviour
         _playerCanMove = true;
     }
 
-
     private void Update()
     {
         if (IsClient && IsOwner && _playerCanMove)
@@ -94,7 +94,6 @@ public class Player : NetworkBehaviour
         {
             projectile.NetworkHide(id);
         }
-        SpawnManager.Instance.SpawnEnemy();
     }
 
     private void SetupProjectilePosition(GameObject projectile)

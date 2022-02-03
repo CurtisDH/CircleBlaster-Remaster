@@ -147,6 +147,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nearbyPlayerTransforms: []
   _enemyBase: {fileID: 7690839101265195213}
+  updateTime: 5
 --- !u!1 &7690839100624989460
 GameObject:
   m_ObjectHideFlags: 0
@@ -329,7 +330,7 @@ GameObject:
   - component: {fileID: 2452746198529288948}
   m_Layer: 0
   m_Name: EnemySlowTank
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -366,12 +367,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   networkObject: {fileID: 7690839101265195214}
-  health: 200
-  speed: 1
+  speed: 5
   damage: 10
   colours:
   - {r: 1, g: 0, b: 0.24331951, a: 1}
   - {r: 1, g: 0.7920547, b: 0, a: 1}
+  health:
+    m_InternalValue: 10
   spriteRenderers:
   - {fileID: 7690839100624989476}
   - {fileID: 7690839100624989478}
