@@ -32,7 +32,7 @@ public class Player : NetworkBehaviour
         weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
     }
     
-    IEnumerator InitialisePlayer()
+    private IEnumerator InitialisePlayer()
     {
         while (!_playerReady)
         {

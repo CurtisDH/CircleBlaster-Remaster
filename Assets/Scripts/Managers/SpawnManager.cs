@@ -105,22 +105,27 @@ namespace Managers
             // visualRadius.transform.position = centerPos;
             return centerPos;
         }
-        
-        public Transform GetClosestPlayer(Vector3 pos)
+
+        public Transform GetClosestPlayer(Vector3 initialPos, List<Transform> compareTransforms)
         {
             float distance = float.MaxValue;
-            Transform t = null;
-            foreach (var client in activePlayerClients)
+            Transform closestPlayer = null;
+            foreach (var player in compareTransforms)
             {
-                float d = Vector3.Distance(pos, client.PlayerObject.transform.position);
-                if (d < distance)
+                if (player == null)
                 {
-                    distance = d;
-                    t = client.PlayerObject.transform;
+                    continue;
+                }
+
+                float dist = Vector3.Distance(initialPos, player.position);
+                if (dist < distance)
+                {
+                    distance = dist;
+                    closestPlayer = player;
                 }
             }
 
-            return t;
+            return closestPlayer;
         }
     }
 }

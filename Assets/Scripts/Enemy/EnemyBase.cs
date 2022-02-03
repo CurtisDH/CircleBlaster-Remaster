@@ -13,7 +13,9 @@ namespace Enemy
         [SerializeField] private float speed;
         [SerializeField] private float damage;
         [SerializeField] private List<Color> colours;
+
         [SerializeField] private SpriteRenderer[] spriteRenderers;
+
         //TODO update this so it works client side (Extremely laggy when using network transform)
         [SerializeField] public Transform closestPlayerTransform;
 
@@ -28,31 +30,18 @@ namespace Enemy
                     continue;
                 }
             }
-
-            if (UIManager.Instance.IsHosting())
-                SetClosestPlayerTransformServerRpc();
         }
         
-        [ServerRpc]
-        public void UpdatePositionServerRpc(Transform pos)
-        {
-            closestPlayerTransform = pos;
-        }
-
-        private void SetClosestPlayerTransformServerRpc()
-        {
-            closestPlayerTransform = SpawnManager.Instance.GetClosestPlayer(transform.position);
-            UpdatePositionServerRpc(closestPlayerTransform);
-        }
-
+        
 
         private void Update()
         {
-            if (UIManager.Instance.IsHosting())
+            if (closestPlayerTransform != null)
             {
                 transform.position = Vector3.MoveTowards(transform.position, closestPlayerTransform.position,
                     speed * Time.deltaTime);
             }
+
         }
     }
 }
