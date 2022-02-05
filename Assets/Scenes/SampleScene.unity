@@ -543,9 +543,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - GameObject: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
-    PreCacheCount: 5
+    PreCacheCount: 250
   - GameObject: {fileID: 5174059667085638991, guid: 1de5b5825753005458e36abed11224f8, type: 3}
     PreCacheCount: 5
+  - GameObject: {fileID: 517012955658475629, guid: 3dfcc211b140fef479a6e639829e509a, type: 3}
+    PreCacheCount: 250
+  - GameObject: {fileID: 517012955658475629, guid: 5b93ff440622f154cbfb4e258e143d2a, type: 3}
+    PreCacheCount: 250
 --- !u!114 &827200835
 MonoBehaviour:
   m_ObjectHideFlags: 0

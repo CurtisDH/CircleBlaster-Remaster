@@ -52,11 +52,14 @@
      <Compile Include="Assets\Scripts\Utility\NetworkObjectPooling.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerManager.cs" />
      <Compile Include="Assets\Scripts\Enemy\EnemyBase.cs" />
+     <Compile Include="Assets\Scripts\Enemy\EnemyDetectionCollider.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerConnectionManager.cs" />
      <Compile Include="Assets\Scripts\Managers\SpawnManager.cs" />
      <Compile Include="Assets\Scripts\Utility\MonoSingleton.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
-     <Compile Include="Assets\Scripts\Enemy\EnemyDetectionCollider.cs" />
+     <Compile Include="Assets\Scripts\Particle Scripts\DeathParticleBase.cs" />
+     <Compile Include="Assets\Scripts\Particle Scripts\EnemyDeathParticle.cs" />
+     <Compile Include="Assets\Scripts\Particle Scripts\PlayerCollisionProjectileParticle.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

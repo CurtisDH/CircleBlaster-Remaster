@@ -1,6 +1,7 @@
 using System;
 using Enemy;
 using Managers;
+using Particle_Scripts;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
@@ -83,25 +84,28 @@ public class Projectile : NetworkBehaviour
 
             OnProjectileHitEvent?.Invoke(target, projectileDamage);
 
-            if (_isServerProjectile)
+            if (_isServerProjectile && networkObject.IsSpawned)
             {
                 DespawnProjectileServerRPC();
                 return;
             }
         }
 
+        OnDeath();
+    }
 
+    private void OnDeath()
+    {
+        var deathParticle = ObjectPooling.Instance.RequestComponentFromPool<PlayerCollisionProjectileParticle>();
+        deathParticle.transform.position = transform.position;
+        deathParticle.gameObject.SetActive(true);
         gameObject.SetActive(false);
     }
 
 
     private void OnDisable()
     {
-        if (!_isServerProjectile)
-        {
-            ObjectPooling.Instance.PoolObject(this);
-            return;
-        }
+        ObjectPooling.Instance.PoolObject(this);
     }
 
     [ServerRpc]

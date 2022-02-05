@@ -12,6 +12,7 @@ namespace Managers
     public class SpawnManager : NetworkSingleton<SpawnManager>
     {
         [SerializeField] private GameObject enemyTankPrefab;
+        public GameObject GetEnemyTankPrefab => enemyTankPrefab;
 
         [SerializeField] private IReadOnlyList<NetworkClient> activePlayerClients;
 
@@ -19,19 +20,19 @@ namespace Managers
 
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
-        public void SpawnEnemy()
-        {
-            var enemy = NetworkObjectPooling.Instance.GetNetworkObject(enemyTankPrefab);
-            enemy.transform.position = transform.position = SetSpawnPosition();
 
-            enemy.Spawn();
+        public void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position)
+        {
+            var prefabObject = NetworkObjectPooling.Instance.GetNetworkObject(prefab);
+            prefabObject.transform.position = position;
+            prefabObject.Spawn();
         }
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Space) && UIManager.Instance.IsHosting())
             {
-                SpawnEnemy();
+                SpawnNetworkObjectFromPrefabObject(GetEnemyTankPrefab, SetSpawnPosition());
             }
         }
 
