@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Managers;
 using Particle_Scripts;
+using PlayerScripts.Camera;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -14,7 +15,9 @@ public class Player : NetworkBehaviour
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
     [SerializeField] private PlayerWeapon weapon;
     [SerializeField] private float health;
-    [SerializeField] private Camera playerCam;
+    
+    //Camera script instead.
+    [SerializeField] private CameraController playerCam;
 
     //Used for retrieving the network pool.
     [SerializeField] private GameObject projectilePrefab;
@@ -75,6 +78,9 @@ public class Player : NetworkBehaviour
         _playerCanMove = false;
         //Not sure how this works with network objects
         StartCoroutine(RespawnPlayer());
+        
+        //Camera will do nothing until reassigned at OnEnable
+        playerCam.SetTargetTransform(null);
         gameObject.SetActive(false);
         //TODO respawn the player
         //Round detection - Event -> respawn?
@@ -98,14 +104,11 @@ public class Player : NetworkBehaviour
                 0.25f);
 
             yield return new WaitForSeconds(2);
-
-            if (IsLocalPlayer)
-                playerCam.gameObject.SetActive(true);
-            teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
-            weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
-            weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
-            //Only updates for the server
+            SetupCamera();
+            SetPlayerColours();
+            //Obsolete
             clientID = (ulong)PlayerConnectionManager.Instance.mostRecentClientConnectionID.Value;
+            
             _playerReady = true;
         }
 
@@ -114,6 +117,22 @@ public class Player : NetworkBehaviour
         _playerCanMove = true;
     }
 
+    private void SetPlayerColours()
+    {
+        teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
+        weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
+        weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
+    }
+
+
+    private void SetupCamera()
+    {
+        if (!IsLocalPlayer) return;
+        
+        playerCam.SetTargetTransform(this.transform);
+        playerCam.gameObject.SetActive(true);
+    }
+    
     private void Update()
     {
         if (!IsClient || !IsOwner || !_playerCanMove) return;

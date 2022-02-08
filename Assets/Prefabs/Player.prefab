@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 777734303}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -84,6 +85,21 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
+--- !u!114 &777734303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c57a687ee17669e4c985758e50dad276, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetTransform: {fileID: 0}
+  smoothSpeed: 20
+  cameraZOffset: -10
 --- !u!1 &581022885614284011
 GameObject:
   m_ObjectHideFlags: 0
@@ -277,7 +293,7 @@ MonoBehaviour:
   teamColourSpriteRenderer: {fileID: 1390246452733342425}
   weapon: {fileID: 8522134931922229729}
   health: 100
-  playerCam: {fileID: 519420031}
+  playerCam: {fileID: 777734303}
   projectilePrefab: {fileID: 3164235778794910943, guid: d800749779fb07a4ba1b11f7e86dacff, type: 3}
   moveSpeed: 5
   clientID: 0
