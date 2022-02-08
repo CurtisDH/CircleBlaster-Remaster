@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Managers;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -24,9 +25,9 @@ namespace Utility
 
         private bool _hasInitialized;
 
-        public void Test()
+        private void OnEnable()
         {
-            OnNetworkSpawn();
+            EventManager.Instance.OnServerStart += OnNetworkSpawn;
         }
 
         public override void OnNetworkSpawn()

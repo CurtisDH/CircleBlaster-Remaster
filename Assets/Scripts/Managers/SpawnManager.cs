@@ -1,6 +1,5 @@
-using System;
 using System.Collections.Generic;
-using Enemy;
+using PlayerScripts;
 using Unity.Netcode;
 using UnityEngine;
 using Utility;
@@ -14,13 +13,15 @@ namespace Managers
         [SerializeField] private GameObject enemyTankPrefab;
         public GameObject GetEnemyTankPrefab => enemyTankPrefab;
 
-        [SerializeField] private IReadOnlyList<NetworkClient> activePlayerClients;
-        
+        private IReadOnlyList<NetworkClient> _activePlayerClients;
+
+        [SerializeField] private List<Player> deadPlayers;
+
 
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
 
-        public void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position)
+        private void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position, bool enemyType = true)
         {
             var prefabObject = NetworkObjectPooling.Instance.GetNetworkObject(prefab);
             prefabObject.transform.position = position;
@@ -37,14 +38,21 @@ namespace Managers
 
         private void OnEnable()
         {
-            NetworkManager.Singleton.OnClientConnectedCallback += ClientConnection;
+            SubscribeEvents();
         }
+
+        private void SubscribeEvents()
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += ClientConnection;
+            EventManager.Instance.OnPlayerDeath += OnPlayerDeath;
+        }
+
 
         private void ClientConnection(ulong obj)
         {
             if (UIManager.Instance.IsHosting())
             {
-                activePlayerClients = NetworkManager.Singleton.ConnectedClientsList;
+                _activePlayerClients = NetworkManager.Singleton.ConnectedClientsList;
             }
         }
 
@@ -65,22 +73,23 @@ namespace Managers
         private float FindRadiusBetweenPlayers()
         {
             float distance = 0;
-            for (int i = 0; i < activePlayerClients.Count; i++)
+            for (int i = 0; i < _activePlayerClients.Count; i++)
             {
-                if (i + 1 > activePlayerClients.Count - 1)
+                if (i + 1 > _activePlayerClients.Count - 1)
                 {
                     break;
                 }
 
-                distance += Vector3.Distance(activePlayerClients[i].PlayerObject.transform.position
-                    , activePlayerClients[i + 1].PlayerObject.transform.position);
+                distance += Vector3.Distance(_activePlayerClients[i].PlayerObject.transform.position
+                    , _activePlayerClients[i + 1].PlayerObject.transform.position);
             }
 
-            var radius = distance * (activePlayerClients.Count);
+            var radius = distance * (_activePlayerClients.Count);
             if (radius < minSpawnRadiusSize)
             {
                 radius = minSpawnRadiusSize;
             }
+
             return radius;
         }
 
@@ -88,15 +97,13 @@ namespace Managers
         {
             Vector3 centerPos = new Vector3();
 
-            foreach (var client in activePlayerClients)
+            foreach (var client in _activePlayerClients)
             {
                 var clientPos = client.PlayerObject.transform.position;
                 var newPos = new Vector3(clientPos.x, clientPos.y, clientPos.z);
-                centerPos += newPos / activePlayerClients.Count;
+                centerPos += newPos / _activePlayerClients.Count;
             }
 
-            // visualRadius.transform.localScale = Vector3.one;
-            // visualRadius.transform.position = centerPos;
             return centerPos;
         }
 
@@ -121,5 +128,66 @@ namespace Managers
 
             return closestPlayer;
         }
+
+        [ServerRpc]
+        private void HideFromAllClientsServerRpc(ulong clientID)
+        {
+            if (!IsServer) return;
+            foreach (var client in _activePlayerClients)
+            {
+                if (clientID != client.ClientId) continue;
+                foreach (var c in _activePlayerClients)
+                {
+                    if (c.ClientId != clientID)
+                        client.PlayerObject.NetworkHide(c.ClientId);
+                }
+            }
+        }
+
+        [ServerRpc]
+        private void ShowToAllClientsServerRpc(ulong clientID)
+        {
+            if (!IsServer) return;
+            foreach (var client in _activePlayerClients)
+            {
+                if (clientID != client.ClientId) continue;
+                foreach (var c in _activePlayerClients)
+                {
+                    if (c.ClientId != clientID)
+                        client.PlayerObject.NetworkShow(c.ClientId);
+                }
+            }
+        }
+
+        #region Player related
+
+        private void OnPlayerDeath(Player playerComponent)
+        {
+            deadPlayers.Add(playerComponent);
+            HideFromAllClientsServerRpc(playerComponent.NetworkObject.OwnerClientId);
+
+            if (deadPlayers.Count == _activePlayerClients.Count)
+            {
+                GameManager.Instance.EndGame();
+            }
+        }
+
+        public void SpawnDeadPlayers()
+        {
+            foreach (var deadPlayer in deadPlayers)
+            {
+                deadPlayer.gameObject.SetActive(true);
+                deadPlayer.transform.position = Vector3.zero;
+                ShowToAllClientsServerRpc(deadPlayer.NetworkObject.OwnerClientId);
+            }
+
+            deadPlayers.Clear();
+        }
+
+        public void SpawnPendingConnectionPlayers()
+        {
+        }
+
+        #endregion
     }
 }

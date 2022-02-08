@@ -9,8 +9,7 @@ namespace PlayerScripts.Camera
         //Smooth the follow || have an option for it
         //Ability to select another player when requested
         //Raycast to select a GameObject to follow? -- I.E could follow an enemy or projectile.
-        // But we then need more information e.g is the player dead? 
-        //Event driven?
+        
 
         [SerializeField] private Transform targetTransform;
         private bool _playerIsDead;

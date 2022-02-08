@@ -30,18 +30,14 @@ namespace Managers
         public void StartHost()
         {
             _hosting = !_hosting;
-            Debug.Log(_hosting);
-            Debug.Log(_connected);
-            Debug.Log(_dedicated);
             SetPort();
-            if (_hosting && !_connected && !_dedicated)
-            {
-                Debug.Log("Started");
-                NetworkManager.Singleton.StartHost();
-                NetworkObjectPooling.Instance.Test();
-                connectionManager.gameObject.SetActive(true);
-                return;
-            }
+            if (!_hosting || _connected || _dedicated) return;
+
+            Debug.Log("Started");
+            NetworkManager.Singleton.StartHost();
+            EventManager.Instance.InvokeOnServerStart();
+            connectionManager.gameObject.SetActive(true);
+            return;
         }
 
         public void Shutdown()

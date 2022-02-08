@@ -21,23 +21,22 @@ namespace Enemy
 
         [SerializeField] private SpriteRenderer[] spriteRenderers;
 
-        [SerializeField] public Transform closestPlayerTransform;
-        private bool colourConfigured;
+        [SerializeField] private Transform closestPlayerTransform;
+        private bool _colourConfigured;
 
-
+        public void SetClosestPlayerTransform(Transform transform)
+        {
+            closestPlayerTransform = transform;
+        }
+        
         private void OnEnable()
         {
-            if (IsServer)
-            {
-                health.OnValueChanged += CheckIfDead;
-                EventManager.Instance.OnProjectileHitEvent += OnProjectileHit;
-            }
-
-            if (colourConfigured)
+            SubscribeEvents();
+            
+            if (_colourConfigured)
             {
                 return;
             }
-
             foreach (var sr in spriteRenderers)
             {
                 if (colours.Count <= 0) continue;
@@ -47,7 +46,26 @@ namespace Enemy
                 continue;
             }
 
-            colourConfigured = true;
+            _colourConfigured = true;
+        }
+
+        private void SubscribeEvents()
+        {
+            if (!IsServer) return;
+
+            health.OnValueChanged += CheckIfDead;
+            EventManager.Instance.OnProjectileHitEvent += OnProjectileHit;
+            //Adds enemy to active enemy list (GameManager)
+            EventManager.Instance.InvokeEnemySpawnEvent(this, true);
+        }
+
+        private void UnsubscribeEvents()
+        {
+            health.OnValueChanged -= CheckIfDead;
+            EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
+            EventManager.Instance.InvokeEnemySpawnEvent(this, false);
+
+            //Removes enemy from active enemy list (GameManager)
         }
 
         [ServerRpc]
@@ -61,9 +79,9 @@ namespace Enemy
             OnDeath();
             if (!IsServer) return;
 
-            health.OnValueChanged -= CheckIfDead;
-            EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
+            UnsubscribeEvents();
         }
+
 
         private void CheckIfDead(float previousvalue, float newvalue)
         {

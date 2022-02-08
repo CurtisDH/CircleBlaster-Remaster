@@ -9,9 +9,8 @@ namespace Managers
     public class PlayerConnectionManager : NetworkSingleton<PlayerConnectionManager>
     {
         [SerializeField] private List<ulong> activeClientIDs;
-        private IReadOnlyDictionary<ulong, NetworkClient> list;
-        public NetworkVariable<int> mostRecentClientConnectionID = new NetworkVariable<int>();
-        
+        private IReadOnlyDictionary<ulong, NetworkClient> connectedClientList;
+
 
         private void OnEnable()
         {
@@ -29,23 +28,26 @@ namespace Managers
         {
             if (!UIManager.Instance.IsHosting()) return;
 
-            list = NetworkManager.Singleton.ConnectedClients;
+            connectedClientList = NetworkManager.Singleton.ConnectedClients;
 
             this.activeClientIDs.Add(clientID);
 
-            if (list.Count != activeClientIDs.Count)
+            if (connectedClientList.Count != activeClientIDs.Count)
             {
                 activeClientIDs.Clear();
-                foreach (var i in list)
+                foreach (var i in connectedClientList)
                 {
                     activeClientIDs.Add(i.Key);
                 }
             }
 
-            mostRecentClientConnectionID.Value = (int)activeClientIDs[^1];
-
             return;
         }
-        
+
+        public IReadOnlyDictionary<ulong, NetworkClient> GetConnectedClients()
+        {
+            return connectedClientList;
+        }
+
     }
 }

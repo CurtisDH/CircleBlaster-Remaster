@@ -41,8 +41,10 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scripts\PlayerScripts\Camera\CameraController.cs" />
      <Compile Include="Assets\Scripts\Managers\UIManager.cs" />
      <Compile Include="Assets\Scripts\PlayerScripts\Projectile.cs" />
+     <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
      <Compile Include="Assets\Scripts\Enemy\EnemyDefault.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\TextPopup.cs" />
      <Compile Include="Assets\Scripts\Utility\Text\GenerateWorldSpaceText.cs" />
@@ -51,8 +53,10 @@
      <Compile Include="Assets\Scripts\Managers\KeybindManager.cs" />
      <Compile Include="Assets\Scripts\Utility\NetworkObjectPooling.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerManager.cs" />
+     <Compile Include="Assets\Scripts\Particle Scripts\DamagePlayerParticle.cs" />
      <Compile Include="Assets\Scripts\Particle Scripts\DeathParticleBase.cs" />
      <Compile Include="Assets\Scripts\Enemy\EnemyBase.cs" />
+     <Compile Include="Assets\Scripts\Managers\EventManager.cs" />
      <Compile Include="Assets\Scripts\Particle Scripts\PlayerCollisionProjectileParticle.cs" />
      <Compile Include="Assets\Scripts\Enemy\EnemyDetectionCollider.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerConnectionManager.cs" />
@@ -60,9 +64,6 @@
      <Compile Include="Assets\Scripts\Particle Scripts\EnemyDeathParticle.cs" />
      <Compile Include="Assets\Scripts\Utility\MonoSingleton.cs" />
      <Compile Include="Assets\Scripts\PlayerScripts\Player.cs" />
-     <Compile Include="Assets\Scripts\Managers\EventManager.cs" />
-     <Compile Include="Assets\Scripts\Particle Scripts\DamagePlayerParticle.cs" />
-     <Compile Include="Assets\Scripts\PlayerScripts\Camera\CameraController.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

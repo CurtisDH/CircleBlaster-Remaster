@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Managers;
+using PlayerScripts;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -14,15 +15,24 @@ namespace Enemy
         [SerializeField] private EnemyBase _enemyBase;
 
         private bool _updateIsRunning = false;
-        
-        [SerializeField]
-        private float updateTime = 5f;
+
+        [SerializeField] private float updateTime = 5f;
         private WaitForSeconds _updateTimer;
 
 
         private void OnEnable()
         {
             _updateTimer = new WaitForSeconds(updateTime);
+            EventManager.Instance.OnPlayerDeath += FindNewTarget;
+        }
+
+        private void FindNewTarget(Player playercomponent)
+        {
+            if (nearbyPlayerTransforms.Contains(playercomponent.transform))
+                nearbyPlayerTransforms.Remove(playercomponent.transform);
+
+            _enemyBase.SetClosestPlayerTransform(
+                SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms));
         }
 
         private void OnTriggerEnter2D(Collider2D col)
@@ -35,8 +45,8 @@ namespace Enemy
                 }
 
                 nearbyPlayerTransforms.Add(col.transform);
-                _enemyBase.closestPlayerTransform =
-                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms);
+                _enemyBase.SetClosestPlayerTransform(
+                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms));
                 if (!_updateIsRunning)
                 {
                     StartCoroutine(UpdateToClosestPlayer());
@@ -48,21 +58,20 @@ namespace Enemy
         {
             if (col.gameObject.CompareTag("Player"))
             {
-                _enemyBase.closestPlayerTransform =
-                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms);
+                _enemyBase.SetClosestPlayerTransform(
+                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms));
             }
         }
-        
+
         private IEnumerator UpdateToClosestPlayer()
         {
             _updateIsRunning = true;
             while (_updateIsRunning)
             {
                 yield return _updateTimer;
-                _enemyBase.closestPlayerTransform =
-                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms);
+                _enemyBase.SetClosestPlayerTransform(
+                    SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms));
             }
         }
-        
     }
 }
