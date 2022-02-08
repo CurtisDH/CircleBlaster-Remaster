@@ -9,6 +9,7 @@ namespace Particle_Scripts
     {
         [SerializeField] private NetworkObject _networkObject;
 
+
         void OnEnable()
         {
             if (!IsServer) return;

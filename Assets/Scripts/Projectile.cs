@@ -6,6 +6,7 @@ using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
 using Utility;
+using Utility.Text;
 
 public class Projectile : NetworkBehaviour
 {
@@ -16,9 +17,9 @@ public class Projectile : NetworkBehaviour
     [SerializeField] public NetworkObject networkObject;
     [SerializeField] private GameObject hitTarget;
 
-    public delegate void ProjectileHitEvent(GameObject target, float damage);
+    /*public delegate void ProjectileHitEvent(GameObject target, float damage);
 
-    public static event ProjectileHitEvent OnProjectileHitEvent;
+    public static event ProjectileHitEvent OnProjectileHitEvent;*/
 
     //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
     [SerializeField] private bool _isServerProjectile = true;
@@ -82,12 +83,11 @@ public class Projectile : NetworkBehaviour
             if (!_isServerProjectile)
                 projectileDamage = 0;
 
-            OnProjectileHitEvent?.Invoke(target, projectileDamage);
+            EventManager.Instance.InvokeOnProjectileHitEvent(target, projectileDamage);
 
             if (_isServerProjectile && networkObject.IsSpawned)
             {
                 DespawnProjectileServerRPC();
-                return;
             }
         }
 
@@ -96,6 +96,8 @@ public class Projectile : NetworkBehaviour
 
     private void OnDeath()
     {
+        Debug.Log("hello");
+        GenerateWorldSpaceText.CreateWorldSpaceTextPopup("OnDeath", Vector3.zero, 2, 2, Color.green);
         var deathParticle = ObjectPooling.Instance.RequestComponentFromPool<PlayerCollisionProjectileParticle>();
         deathParticle.transform.position = transform.position;
         deathParticle.gameObject.SetActive(true);

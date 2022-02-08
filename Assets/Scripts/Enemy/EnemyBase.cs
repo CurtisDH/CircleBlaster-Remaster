@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Managers;
 using Particle_Scripts;
 using Unity.Netcode;
@@ -32,7 +30,7 @@ namespace Enemy
             if (IsServer)
             {
                 health.OnValueChanged += CheckIfDead;
-                Projectile.OnProjectileHitEvent += OnProjectileHit;
+                EventManager.Instance.OnProjectileHitEvent += OnProjectileHit;
             }
 
             if (colourConfigured)
@@ -64,7 +62,7 @@ namespace Enemy
             if (!IsServer) return;
             
             health.OnValueChanged -= CheckIfDead;
-            Projectile.OnProjectileHitEvent -= OnProjectileHit;
+            EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
         }
 
         private void CheckIfDead(float previousvalue, float newvalue)
@@ -87,7 +85,6 @@ namespace Enemy
         [ServerRpc]
         private void DespawnEnemyServerRpc()
         {
-            //Spawn Manager particles?
             networkObject.Despawn();
         }
 
@@ -106,6 +103,14 @@ namespace Enemy
             {
                 transform.position = Vector3.MoveTowards(transform.position, closestPlayerTransform.position,
                     speed * Time.deltaTime);
+            }
+        }
+
+        private void OnTriggerEnter2D(Collider2D col)
+        {
+            if (col.CompareTag("Player"))
+            {
+                EventManager.Instance.InvokeOnEnemyHitEvent(col.gameObject,damage);
             }
         }
     }

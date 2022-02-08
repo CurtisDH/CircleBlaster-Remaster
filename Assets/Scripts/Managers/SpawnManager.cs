@@ -15,8 +15,7 @@ namespace Managers
         public GameObject GetEnemyTankPrefab => enemyTankPrefab;
 
         [SerializeField] private IReadOnlyList<NetworkClient> activePlayerClients;
-
-        [SerializeField] private Transform visualRadius;
+        
 
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
@@ -82,12 +81,6 @@ namespace Managers
             {
                 radius = minSpawnRadiusSize;
             }
-
-            visualRadius.transform.localScale = new Vector3(radius,
-                radius,
-                radius);
-            visualRadius.transform.position = FindCenterBetweenPlayers();
-
             return radius;
         }
 

@@ -12,6 +12,7 @@ public class Player : NetworkBehaviour
     [SerializeField] private int teamID;
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
     [SerializeField] private PlayerWeapon weapon;
+    [SerializeField] private float health;
 
 
     //Used for retrieving the network pool.
@@ -26,13 +27,42 @@ public class Player : NetworkBehaviour
 
     private void OnEnable()
     {
+        SubscribeEvents();
         StartCoroutine(InitialisePlayer());
         //TODO Allow customisation within a UI menu.
-        teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
-        weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
-        weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
     }
-    
+
+    private void OnDisable()
+    {
+        UnsubscribeEvents();
+    }
+
+    private void UnsubscribeEvents()
+    {
+        EventManager.Instance.OnEnemyHitEvent -= OnPlayerEnemyHitEvent;
+    }
+
+    private void SubscribeEvents()
+    {
+        EventManager.Instance.OnEnemyHitEvent += OnPlayerEnemyHitEvent;
+    }
+
+    private void OnPlayerEnemyHitEvent(GameObject obj, float damage)
+    {
+        if (obj != gameObject) return;
+
+        health -= damage;
+        if (health <= 0)
+        {
+            PlayerDeath();
+        }
+    }
+
+    private void PlayerDeath()
+    {
+        throw new NotImplementedException();
+    }
+
     private IEnumerator InitialisePlayer()
     {
         while (!_playerReady)
@@ -40,6 +70,9 @@ public class Player : NetworkBehaviour
             GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loading...",
                 transform.position, 1.5f, 2, Color.yellow,
                 0.25f);
+            teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
+            weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
+            weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
             yield return new WaitForSeconds(2);
             //Only updates for the server
             clientID = (ulong)PlayerConnectionManager.Instance.mostRecentClientConnectionID.Value;
@@ -78,6 +111,7 @@ public class Player : NetworkBehaviour
             {
                 id = UInt64.MaxValue;
             }
+
             RequestProjectileSpawnServerRPC(id);
         }
     }
