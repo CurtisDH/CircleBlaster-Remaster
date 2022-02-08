@@ -60,7 +60,7 @@ namespace Enemy
         {
             OnDeath();
             if (!IsServer) return;
-            
+
             health.OnValueChanged -= CheckIfDead;
             EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
         }
@@ -108,10 +108,15 @@ namespace Enemy
 
         private void OnTriggerEnter2D(Collider2D col)
         {
-            if (col.CompareTag("Player"))
+            if (!col.CompareTag("Player")) return;
+
+
+            if (IsServer)
             {
-                EventManager.Instance.InvokeOnEnemyHitEvent(col.gameObject,damage);
+                health.Value = 0;
             }
+
+            EventManager.Instance.InvokeOnEnemyHitEvent(col.gameObject, damage);
         }
     }
 }

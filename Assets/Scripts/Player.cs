@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Managers;
+using Particle_Scripts;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -13,7 +14,7 @@ public class Player : NetworkBehaviour
     [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
     [SerializeField] private PlayerWeapon weapon;
     [SerializeField] private float health;
-
+    [SerializeField] private Camera playerCam;
 
     //Used for retrieving the network pool.
     [SerializeField] private GameObject projectilePrefab;
@@ -55,12 +56,37 @@ public class Player : NetworkBehaviour
         if (health <= 0)
         {
             PlayerDeath();
+            return;
         }
+
+        DamagePlayerEffect();
     }
+
+    private void DamagePlayerEffect()
+    {
+        var damageParticle = ObjectPooling.Instance.RequestComponentFromPool<DamagePlayerParticle>();
+        damageParticle.transform.position = transform.position;
+        damageParticle.gameObject.SetActive(true);
+    }
+
 
     private void PlayerDeath()
     {
-        throw new NotImplementedException();
+        _playerCanMove = false;
+        //Not sure how this works with network objects
+        StartCoroutine(RespawnPlayer());
+        gameObject.SetActive(false);
+        //TODO respawn the player
+        //Round detection - Event -> respawn?
+        // Revive system? - Create a circle area that the other player/s have to enter to revive the downed player.
+        //TODO change camera tracking to nearest ally (also allow for switching between players)
+    }
+
+    private IEnumerator RespawnPlayer()
+    {
+        yield return new WaitForSeconds(2f);
+        _playerCanMove = true;
+        gameObject.SetActive(true);
     }
 
     private IEnumerator InitialisePlayer()
@@ -70,10 +96,14 @@ public class Player : NetworkBehaviour
             GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Loading...",
                 transform.position, 1.5f, 2, Color.yellow,
                 0.25f);
+
+            yield return new WaitForSeconds(2);
+
+            if (IsLocalPlayer)
+                playerCam.gameObject.SetActive(true);
             teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
             weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
             weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
-            yield return new WaitForSeconds(2);
             //Only updates for the server
             clientID = (ulong)PlayerConnectionManager.Instance.mostRecentClientConnectionID.Value;
             _playerReady = true;
@@ -86,12 +116,10 @@ public class Player : NetworkBehaviour
 
     private void Update()
     {
-        if (IsClient && IsOwner && _playerCanMove)
-        {
-            weapon.UpdatePosition();
-            PlayerMovement();
-            Shoot();
-        }
+        if (!IsClient || !IsOwner || !_playerCanMove) return;
+        weapon.UpdatePosition();
+        PlayerMovement();
+        Shoot();
     }
 
     private void Shoot()

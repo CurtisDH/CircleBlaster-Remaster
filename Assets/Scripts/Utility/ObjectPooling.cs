@@ -12,12 +12,14 @@ namespace Utility
     {
         private Dictionary<Type, List<Component>> _pooledObjects = new();
         [SerializeField] private List<PoolConfig> prefabs;
+
         [Serializable]
         public struct PoolConfig
         {
             public GameObject GameObject;
             public int PreCacheCount;
         }
+
         public IEnumerable<GameObject> GetPrefabs()
         {
             return prefabs.Select(poolConfig => poolConfig.GameObject).ToList();

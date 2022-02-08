@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4139495863168706373}
   - component: {fileID: 6403189314637354223}
   - component: {fileID: 4771171278980802802}
-  - component: {fileID: 6782590848098405010}
+  - component: {fileID: 1827678789457047384}
   m_Layer: 0
   m_Name: ParticleDamagePlayer
   m_TagString: Untagged
@@ -4888,7 +4888,7 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &6782590848098405010
+--- !u!114 &1827678789457047384
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4897,7 +4897,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8223671397134613871}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 818518131c5b9044781fa9e998b31eaf, type: 3}
+  m_Script: {fileID: 11500000, guid: 411383e31de18e443b94cc3f2b2a9dd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _networkObject: {fileID: 4771171278980802802}

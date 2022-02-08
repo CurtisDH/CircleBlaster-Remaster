@@ -96,8 +96,6 @@ public class Projectile : NetworkBehaviour
 
     private void OnDeath()
     {
-        Debug.Log("hello");
-        GenerateWorldSpaceText.CreateWorldSpaceTextPopup("OnDeath", Vector3.zero, 2, 2, Color.green);
         var deathParticle = ObjectPooling.Instance.RequestComponentFromPool<PlayerCollisionProjectileParticle>();
         deathParticle.transform.position = transform.position;
         deathParticle.gameObject.SetActive(true);
