@@ -111,7 +111,6 @@ public class Projectile : NetworkBehaviour
     [ServerRpc]
     private void DespawnProjectileServerRPC()
     {
-        //TODO Particle display
         networkObject.Despawn();
     }
 }

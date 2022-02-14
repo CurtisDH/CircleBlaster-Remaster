@@ -47,8 +47,8 @@ namespace Managers
             if (newvalue)
             {
                 EventManager.Instance.InvokeOnEndGameEvent();
-
-                waveRound.Value = 0;
+                if (IsServer)
+                    waveRound.Value = 0;
             }
             //Kill all enemies
             //Reset wave count

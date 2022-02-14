@@ -168,14 +168,16 @@ namespace PlayerScripts
 
             _playerReady = false;
             _playerCanMove = false;
-            Debug.Log("Hey player is no longer ready and cannot move.");
             //Tells the spawn manager we're dead
             EventManager.Instance.InvokeOnPlayerDeath(this);
-            Debug.Log("After sending an event OnPlayerDeath");
-            Debug.Log("Setting inactive now..");
-            playerCam.SetTargetTransform(SpawnManager.Instance.GetActivePlayer().transform);
+            var activePlayers = SpawnManager.Instance.GetAllAlivePlayers();
+            Transform activePlayerTransform = null;
+            if (activePlayers.Count > 0)
+            {
+                activePlayerTransform = activePlayers[0].transform;
+            }
+            playerCam.SetTargetTransform(activePlayerTransform != null ? activePlayerTransform : null);
             gameObject.SetActive(false);
-            Debug.Log("Should no longer be active.");
             
             //TODO respawn the player
             //Round detection - Event -> respawn?

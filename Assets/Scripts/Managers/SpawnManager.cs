@@ -68,7 +68,7 @@ namespace Managers
 
         private void ClientConnection(ulong obj)
         {
-            if (UIManager.Instance.IsHosting())
+            if (IsServer)
             {
                 _activePlayerClients = NetworkManager.Singleton.ConnectedClientsList;
             }
