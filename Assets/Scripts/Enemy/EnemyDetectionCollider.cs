@@ -1,9 +1,7 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using Managers;
 using PlayerScripts;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Enemy
@@ -26,11 +24,16 @@ namespace Enemy
             EventManager.Instance.OnPlayerDeath += FindNewTarget;
         }
 
+        private void OnDisable()
+        {
+            EventManager.Instance.OnPlayerDeath -= FindNewTarget;
+        }
+
         private void FindNewTarget(Player playercomponent)
         {
             if (nearbyPlayerTransforms.Contains(playercomponent.transform))
                 nearbyPlayerTransforms.Remove(playercomponent.transform);
-
+            
             _enemyBase.SetClosestPlayerTransform(
                 SpawnManager.Instance.GetClosestPlayer(transform.position, nearbyPlayerTransforms));
         }

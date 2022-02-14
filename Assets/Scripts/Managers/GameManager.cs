@@ -26,7 +26,7 @@ namespace Managers
 
         private void OnEnable()
         {
-            EventManager.Instance.OnServerStart += SubscribeEvents;
+            SubscribeEvents();
         }
 
         private void OnDisable()
@@ -44,11 +44,16 @@ namespace Managers
 
         private void EndGameLogic(bool previousvalue, bool newvalue)
         {
+            if (newvalue)
+            {
+                EventManager.Instance.InvokeOnEndGameEvent();
+
+                waveRound.Value = 0;
+            }
             //Kill all enemies
             //Reset wave count
             //Reset all player items & weapons?
             //Respawn all players
-            throw new NotImplementedException();
         }
 
         private void EnemySpawnEvent(EnemyBase enemyBaseComponent, bool isActive)
@@ -87,9 +92,19 @@ namespace Managers
 
         private void OnWaveStatusChange(bool previousValue, bool waveIsActive)
         {
+            //makes sense in my head right now, but its late so might not do what i expect
+            if (previousValue == waveIsActive)
+            {
+                return;
+            }
+
             if (!waveIsActive)
             {
-                waveRound.Value++;
+                if (IsServer)
+                {
+                    waveRound.Value++;
+                }
+
                 EventManager.Instance.InvokeOnWaveComplete(waveRound.Value);
                 //Enable store
                 EnableStore(true);
@@ -129,11 +144,10 @@ namespace Managers
                 storeStatus = "Closed";
             }
 
-            foreach (var player in PlayerConnectionManager.Instance.GetConnectedClients())
+            foreach (var player in SpawnManager.Instance.GetAllAlivePlayers())
             {
-                //TODO allow for colour change mid string
-                GenerateWorldSpaceText.CreateWorldSpaceTextPopup($"Store is: {storeStatus}",
-                    player.Value.PlayerObject.transform.position, 1, 2, Colour, 0.5f);
+                GenerateWorldSpaceText.CreateWorldSpaceTextPopup($"Store is now {storeStatus}",
+                    player.transform.position, 2, 2, Colour, .25f);
             }
         }
 

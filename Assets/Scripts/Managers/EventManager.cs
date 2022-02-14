@@ -1,3 +1,4 @@
+using System;
 using Enemy;
 using PlayerScripts;
 using UnityEngine;
@@ -36,6 +37,9 @@ namespace Managers
         public delegate void WaveCompleteEvent(int waveCount);
 
         public event WaveCompleteEvent OnWaveComplete;
+
+
+        public event Action OnEndGameEvent;
 
 
         [SerializeField] private bool trackEvents;
@@ -90,6 +94,12 @@ namespace Managers
             {
                 Debug.Log(message);
             }
+        }
+
+        public void InvokeOnEndGameEvent()
+        {
+            TrackEvent("InvokeEndGameEvent");
+            OnEndGameEvent?.Invoke();
         }
     }
 }

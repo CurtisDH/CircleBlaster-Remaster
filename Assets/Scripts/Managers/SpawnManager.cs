@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PlayerScripts;
 using Unity.Netcode;
@@ -16,8 +17,7 @@ namespace Managers
         private IReadOnlyList<NetworkClient> _activePlayerClients;
 
         [SerializeField] private List<Player> deadPlayers;
-
-
+        [SerializeField] private List<GameObject> alivePlayers;
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
 
@@ -41,10 +41,28 @@ namespace Managers
             SubscribeEvents();
         }
 
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+        private void UnsubscribeEvents()
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= ClientConnection;
+            EventManager.Instance.OnPlayerDeath -= OnPlayerDeath;
+            EventManager.Instance.OnPlayerSpawn -= OnPlayerSpawn;
+        }
+
         private void SubscribeEvents()
         {
             NetworkManager.Singleton.OnClientConnectedCallback += ClientConnection;
             EventManager.Instance.OnPlayerDeath += OnPlayerDeath;
+            EventManager.Instance.OnPlayerSpawn += OnPlayerSpawn;
+        }
+
+        private void OnPlayerSpawn(Player playercomponent)
+        {
+            alivePlayers.Add(playercomponent.gameObject);
         }
 
 
@@ -129,56 +147,43 @@ namespace Managers
             return closestPlayer;
         }
 
-        [ServerRpc]
-        private void HideFromAllClientsServerRpc(ulong clientID)
-        {
-            if (!IsServer) return;
-            foreach (var client in _activePlayerClients)
-            {
-                if (clientID != client.ClientId) continue;
-                foreach (var c in _activePlayerClients)
-                {
-                    if (c.ClientId != clientID)
-                        client.PlayerObject.NetworkHide(c.ClientId);
-                }
-            }
-        }
-
-        [ServerRpc]
-        private void ShowToAllClientsServerRpc(ulong clientID)
-        {
-            if (!IsServer) return;
-            foreach (var client in _activePlayerClients)
-            {
-                if (clientID != client.ClientId) continue;
-                foreach (var c in _activePlayerClients)
-                {
-                    if (c.ClientId != clientID)
-                        client.PlayerObject.NetworkShow(c.ClientId);
-                }
-            }
-        }
 
         #region Player related
 
         private void OnPlayerDeath(Player playerComponent)
         {
+            Debug.Log("SpawnManager::OnPlayerDeath");
             deadPlayers.Add(playerComponent);
-            HideFromAllClientsServerRpc(playerComponent.NetworkObject.OwnerClientId);
 
+            alivePlayers.Remove(playerComponent.gameObject);
+
+            //HideAllDeadClientsServerRpc();
+            if (!IsServer) return;
             if (deadPlayers.Count == _activePlayerClients.Count)
             {
                 GameManager.Instance.EndGame();
             }
         }
 
+        public GameObject GetActivePlayer()
+        {
+            return alivePlayers.Count > 0 ? alivePlayers[0] : null;
+        }
+        
+        public List<GameObject> GetAllAlivePlayers()
+        {
+            return alivePlayers;
+        }
+
+
         public void SpawnDeadPlayers()
         {
             foreach (var deadPlayer in deadPlayers)
             {
                 deadPlayer.gameObject.SetActive(true);
+                deadPlayer.SetDeathValue(false);
+                // may need to be set on the player itself.
                 deadPlayer.transform.position = Vector3.zero;
-                ShowToAllClientsServerRpc(deadPlayer.NetworkObject.OwnerClientId);
             }
 
             deadPlayers.Clear();
@@ -186,6 +191,7 @@ namespace Managers
 
         public void SpawnPendingConnectionPlayers()
         {
+            //Probably just filter them through into dead players aswell. 
         }
 
         #endregion

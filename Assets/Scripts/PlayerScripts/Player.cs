@@ -15,7 +15,9 @@ namespace PlayerScripts
         [SerializeField] private int teamID;
         [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
         [SerializeField] private PlayerWeapon weapon;
-        [SerializeField] private float health;
+        [SerializeField] private float initialHealth = 100f;
+        [SerializeField] private NetworkVariable<float> health;
+        [SerializeField] private NetworkVariable<bool> isDead;
 
         //Camera script instead.
         [SerializeField] private CameraController playerCam;
@@ -32,7 +34,6 @@ namespace PlayerScripts
 
         private void OnEnable()
         {
-            SubscribeEvents();
             if (!_playerReady)
             {
                 StartCoroutine(InitialisePlayer());
@@ -41,34 +42,113 @@ namespace PlayerScripts
             //TODO Allow customisation within a UI menu.
         }
 
-        private void OnDisable()
+        public void SetDeathValue(bool value)
         {
-            UnsubscribeEvents();
+            if (IsServer)
+                isDead.Value = value;
         }
 
-        private void UnsubscribeEvents()
+        private IEnumerator InitialisePlayer()
         {
-            EventManager.Instance.OnEnemyHitEvent -= OnPlayerEnemyHitEvent;
+            while (!_playerReady)
+            {
+                GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Spawning...",
+                    transform.position, 1.5f, 2, Color.yellow,
+                    0.25f);
+                ResetData();
+                yield return new WaitForSeconds(2);
+                if (isDead.Value) //Update any clients that join half way through? Not sure how this will function yet
+                {
+                    PlayerDeath();
+                }
+
+                SubscribeClientEvents();
+                SubscribeServerEvents();
+                SetupCamera(this.transform, true);
+                SetPlayerColours();
+
+                SendPlayerSpawnEvent();
+                _playerReady = true;
+            }
+
+            GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Spawned",
+                transform.position, 1.5f, 2, Color.green, 0.25f);
+            _playerCanMove = true;
         }
 
-        private void SubscribeEvents()
+        private void ResetData()
         {
-            EventManager.Instance.OnEnemyHitEvent += OnPlayerEnemyHitEvent;
-            EventManager.Instance.InvokeOnPlayerSpawn(this);
+            if (IsServer)
+            {
+                health.Value = initialHealth;
+            }
+
+            var alivePlayer = SpawnManager.Instance.GetActivePlayer();
+            if (alivePlayer != null)
+            {
+                SetupCamera(alivePlayer.transform, true);
+            }
+            else
+            {
+                SetupCamera(null, false);
+            }
         }
 
-        private void OnPlayerEnemyHitEvent(GameObject obj, float damage)
+        private void SubscribeClientEvents()
         {
-            if (obj != gameObject) return;
+            health.OnValueChanged += OnPlayerHealthChange;
+        }
 
-            health -= damage;
-            if (health <= 0)
+        private void SubscribeServerEvents()
+        {
+            if (IsServer)
+                EventManager.Instance.OnEnemyHitEvent += OnPlayerEnemyHitEvent;
+        }
+
+        private void OnPlayerHealthChange(float previousvalue, float newvalue)
+        {
+            if (health.Value <= 0)
             {
                 PlayerDeath();
                 return;
             }
 
             DamagePlayerEffect();
+        }
+
+        private void SetupCamera(Transform followTransform, bool setActive)
+        {
+            if (!IsLocalPlayer) return;
+
+            playerCam.SetTargetTransform(followTransform);
+            playerCam.gameObject.SetActive(setActive);
+        }
+
+
+        private void UnsubscribeEvents()
+        {
+            UnsubscribeServerEvents();
+            health.OnValueChanged -= OnPlayerHealthChange;
+        }
+
+        private void UnsubscribeServerEvents()
+        {
+            if (IsServer)
+                EventManager.Instance.OnEnemyHitEvent -= OnPlayerEnemyHitEvent;
+        }
+
+
+        private void OnDisable()
+        {
+            UnsubscribeEvents();
+        }
+
+
+        private void OnPlayerEnemyHitEvent(GameObject obj, float damage)
+        {
+            if (obj != gameObject || !IsServer) return;
+
+            health.Value -= damage;
         }
 
         private void DamagePlayerEffect()
@@ -81,50 +161,28 @@ namespace PlayerScripts
 
         private void PlayerDeath()
         {
-            if (!IsOwner)
+            if (IsServer)
             {
-                return;
+                isDead.Value = true;
             }
 
             _playerReady = false;
             _playerCanMove = false;
-            //Not sure how this works with network objects
-            var localID = NetworkManager.Singleton.LocalClientId;
-            Debug.Log($"Invoking LocalclientID:{localID}");
+            Debug.Log("Hey player is no longer ready and cannot move.");
+            //Tells the spawn manager we're dead
             EventManager.Instance.InvokeOnPlayerDeath(this);
-            playerCam.SetTargetTransform(null);
+            Debug.Log("After sending an event OnPlayerDeath");
+            Debug.Log("Setting inactive now..");
+            playerCam.SetTargetTransform(SpawnManager.Instance.GetActivePlayer().transform);
             gameObject.SetActive(false);
-
-            //StartCoroutine(RespawnPlayer());
-
-            //Camera will do nothing until reassigned at OnEnable
-
-            //gameObject.SetActive(false);
+            Debug.Log("Should no longer be active.");
+            
             //TODO respawn the player
             //Round detection - Event -> respawn?
             // Revive system? - Create a circle area that the other player/s have to enter to revive the downed player.
             //TODO change camera tracking to nearest ally (also allow for switching between players)
         }
 
-        private IEnumerator InitialisePlayer()
-        {
-            while (!_playerReady)
-            {
-                GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Spawning...",
-                    transform.position, 1.5f, 2, Color.yellow,
-                    0.25f);
-
-                yield return new WaitForSeconds(2);
-                SetupCamera();
-                SetPlayerColours();
-
-                _playerReady = true;
-            }
-
-            GenerateWorldSpaceText.CreateWorldSpaceTextPopup("Spawned",
-                transform.position, 1.5f, 2, Color.green, 0.25f);
-            _playerCanMove = true;
-        }
 
         private void SetPlayerColours()
         {
@@ -133,14 +191,6 @@ namespace PlayerScripts
             weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
         }
 
-
-        private void SetupCamera()
-        {
-            if (!IsLocalPlayer) return;
-
-            playerCam.SetTargetTransform(this.transform);
-            playerCam.gameObject.SetActive(true);
-        }
 
         private void Update()
         {
@@ -245,6 +295,11 @@ namespace PlayerScripts
             }
 
             return vert;
+        }
+
+        private void SendPlayerSpawnEvent()
+        {
+            EventManager.Instance.InvokeOnPlayerSpawn(this);
         }
     }
 }

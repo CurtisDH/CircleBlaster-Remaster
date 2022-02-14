@@ -28,15 +28,16 @@ namespace Enemy
         {
             closestPlayerTransform = transform;
         }
-        
+
         private void OnEnable()
         {
             SubscribeEvents();
-            
+
             if (_colourConfigured)
             {
                 return;
             }
+
             foreach (var sr in spriteRenderers)
             {
                 if (colours.Count <= 0) continue;
@@ -56,12 +57,14 @@ namespace Enemy
             health.OnValueChanged += CheckIfDead;
             EventManager.Instance.OnProjectileHitEvent += OnProjectileHit;
             //Adds enemy to active enemy list (GameManager)
+            EventManager.Instance.OnEndGameEvent += EndGame;
             EventManager.Instance.InvokeEnemySpawnEvent(this, true);
         }
 
         private void UnsubscribeEvents()
         {
             health.OnValueChanged -= CheckIfDead;
+            EventManager.Instance.OnEndGameEvent -= EndGame;
             EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
             EventManager.Instance.InvokeEnemySpawnEvent(this, false);
 
@@ -112,6 +115,11 @@ namespace Enemy
             var deathParticle = ObjectPooling.Instance.RequestComponentFromPool<EnemyDeathParticle>();
             deathParticle.transform.position = transform.position;
             deathParticle.gameObject.SetActive(true);
+        }
+
+        public void EndGame()
+        {
+            DespawnEnemyServerRpc();
         }
 
 
