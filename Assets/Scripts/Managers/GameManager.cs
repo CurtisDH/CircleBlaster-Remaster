@@ -56,6 +56,11 @@ namespace Managers
             //Respawn all players
         }
 
+        public bool IsWaveActive()
+        {
+            return isWaveActive.Value;
+        }
+
         private void EnemySpawnEvent(EnemyBase enemyBaseComponent, bool isActive)
         {
             if (activeEnemies.Contains(enemyBaseComponent) && !isActive)

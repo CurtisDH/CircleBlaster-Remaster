@@ -62,7 +62,19 @@ namespace PlayerScripts
                     PlayerDeath();
                 }
 
+                if (GameManager.Instance.IsWaveActive())
+                {
+                    if (!isDead.Value)
+                    {
+                        //TODO do this better, currently the player connecting mid round will be left on a frozen screen
+                        PlayerDeath(); // wont mess with the current session
+                    }
+
+                    continue;
+                }
+
                 SubscribeClientEvents();
+                SetupPlayerTag("Player");
                 SubscribeServerEvents();
                 SetupCamera(this.transform, true);
                 SetPlayerColours();
@@ -83,6 +95,8 @@ namespace PlayerScripts
                 health.Value = initialHealth;
             }
 
+            SetupPlayerTag("Respawn");
+
             var alivePlayer = SpawnManager.Instance.GetActivePlayer();
             if (alivePlayer != null)
             {
@@ -92,6 +106,11 @@ namespace PlayerScripts
             {
                 SetupCamera(null, false);
             }
+        }
+
+        private void SetupPlayerTag(string tag)
+        {
+            gameObject.tag = tag;
         }
 
         private void SubscribeClientEvents()
@@ -189,6 +208,8 @@ namespace PlayerScripts
 
         private void SetPlayerColours()
         {
+            //TODO allow for player customisation
+            //TODO rework this, after every wave the player colour is dependent on the death order.
             var id = SpawnManager.Instance.GetAllAlivePlayers().Count;
             teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(id);
             weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(id + 1));
