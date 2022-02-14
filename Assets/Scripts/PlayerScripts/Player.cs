@@ -176,9 +176,10 @@ namespace PlayerScripts
             {
                 activePlayerTransform = activePlayers[0].transform;
             }
+
             playerCam.SetTargetTransform(activePlayerTransform != null ? activePlayerTransform : null);
             gameObject.SetActive(false);
-            
+
             //TODO respawn the player
             //Round detection - Event -> respawn?
             // Revive system? - Create a circle area that the other player/s have to enter to revive the downed player.
@@ -188,9 +189,10 @@ namespace PlayerScripts
 
         private void SetPlayerColours()
         {
-            teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(teamID);
-            weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 1));
-            weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(teamID + 2));
+            var id = SpawnManager.Instance.GetAllAlivePlayers().Count;
+            teamColourSpriteRenderer.color = PlayerManager.Instance.GetColourFromTeamID(id);
+            weapon.SetOuterCircleColour(PlayerManager.Instance.GetColourFromTeamID(id + 1));
+            weapon.SetInnerCircleColour(PlayerManager.Instance.GetColourFromTeamID(id + 2));
         }
 
 
