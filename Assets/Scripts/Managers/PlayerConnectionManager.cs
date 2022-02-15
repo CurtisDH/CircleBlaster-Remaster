@@ -18,6 +18,13 @@ namespace Managers
             NetworkManager.Singleton.OnClientDisconnectCallback += ClientDisconnected;
         }
 
+        [ClientRpc]
+        public void TestingClientRpc()
+        {
+            if (!IsServer)
+                UIManager.Instance.Shutdown();
+        }
+
         private void ClientDisconnected(ulong clientID)
         {
             if (!UIManager.Instance.IsHosting()) return;
@@ -48,6 +55,5 @@ namespace Managers
         {
             return connectedClientList;
         }
-
     }
 }

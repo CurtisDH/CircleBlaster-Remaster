@@ -1,14 +1,17 @@
+using System.Collections;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UNET;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
+using Utility.Text;
 
 namespace Managers
 {
-    public class UIManager : MonoSingleton<UIManager>
+    public class UIManager : NetworkSingleton<UIManager>
     {
         [SerializeField] private TMP_InputField ipAddressInputField;
         [SerializeField] private TMP_InputField portInputField;
@@ -42,13 +45,39 @@ namespace Managers
 
         public void Shutdown()
         {
+            if (IsServer)
+            {
+                PlayerConnectionManager.Instance.TestingClientRpc();
+            }
+
+            StartCoroutine(ShuttingDown());
+        }
+
+        IEnumerator ShuttingDown()
+        {
+            DisplayMessageAboveAllClients("Server shutting down...");
+            //Delay is so we can send information to the client
+            yield return new WaitForSeconds(1f);
             _hosting = false;
             _connected = false;
             _dedicated = false;
             Debug.Log("Shutdown");
             connectionManager.gameObject.SetActive(false);
             NetworkManager.Singleton.Shutdown();
+
+            //Reload scene.
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
+
+        private void DisplayMessageAboveAllClients(string serverShuttingDown)
+        {
+            foreach (var client in SpawnManager.Instance.GetAllAlivePlayers())
+            {
+                GenerateWorldSpaceText.CreateWorldSpaceTextPopup(serverShuttingDown, client.transform.position, 1, 3,
+                    Color.yellow,.25f);
+            }
+        }
+
 
         public void StartConnected()
         {

@@ -19,7 +19,7 @@ namespace PlayerScripts.Camera
 
         private void Update()
         {
-            if (targetTransform is null)
+            if (targetTransform == null)
             {
                 return;
             }
