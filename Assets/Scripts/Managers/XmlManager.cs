@@ -70,14 +70,16 @@ namespace Managers
             }
         }
 
-        private static void CheckIfConfigExists(string filePath)
+        private static string VerifyConfigExists(string filePath)
         {
             if (File.Exists(filePath))
             {
-                return;
+                return filePath;
             }
 
-            File.Create(filePath);
+            var f = File.Create(filePath);
+            f.Close();
+            return filePath;
         }
 
         [System.Serializable]
@@ -121,7 +123,8 @@ namespace Managers
 
         public static void SerializeWaveData(FullWaveInformation waveInformation)
         {
-            TextWriter writer = new StreamWriter(Application.persistentDataPath + "/ConfigTest/config.xml");
+            LoadConfigModules(); //TODO temp
+            TextWriter writer = new StreamWriter(VerifyConfigExists(_waveDataXmlConfig));
             Debug.Log(Application.persistentDataPath + "/ConfigTest/config.xml");
             XmlSerializer x = new(typeof(FullWaveInformation));
             x.Serialize(writer, waveInformation);
