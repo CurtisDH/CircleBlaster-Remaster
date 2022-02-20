@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -56,6 +53,13 @@ namespace Managers
             CheckIfDirectoriesExist(directories);
         }
 
+        public enum ConfigName
+        {
+            EnemyConfig,
+            WaveDataConfig,
+            StoreContentConfig
+        }
+
 
         private static void CheckIfDirectoriesExist(string[] dirs)
         {
@@ -81,17 +85,20 @@ namespace Managers
             f.Close();
             return filePath;
         }
-        
+
         [System.Serializable]
         public struct Wave //TODO wave is containing an entire enemy type currently. Should probably only be the ID
         {
-            // If a wave is spawned on the same waveID the lowest orderid will spawn first.
+            [Tooltip("If a wave is spawned on the same waveID the lowest OrderId will spawn first.")]
             public int orderID;
-            public int waveIDToSpawnOn;
+
+            [Tooltip("When the wave will spawn")] public int waveIDToSpawnOn;
+
             //Surely there is a better way to safeguard this so I cant accidently mistype a unique id..
             //Load enemies and turn their ID into enums?? Is that possible?
+            [Tooltip("The enemyID that should be spawned")]
             public string uniqueEnemyID; //TODO do i want this here? Maybe I should only reference a unique enemy id
-            
+
             public int amountToSpawn;
             //option to delay spawn
         }
@@ -108,11 +115,16 @@ namespace Managers
         [System.Serializable]
         public struct Enemy
         {
+            [Tooltip("A string that is used to identify this enemy")]
             public string uniqueID;
+
             public string displayName;
+            [Tooltip("Size of the Enemy")] public float scale;
             public float health;
             public float speed;
             public float damage;
+
+            [Tooltip("Cant remember how this works honestly, gotta come back to this")] //TODO fix
             public List<Color> colours;
         }
 
@@ -122,19 +134,38 @@ namespace Managers
         {
             public List<Wave> Waves;
         }
-
-        public static void SerializeWaveData(FullWaveInformation waveInformation)
-        {
-            LoadConfigModules(); //TODO temp
-            TextWriter writer = new StreamWriter(VerifyConfigExists(_waveDataXmlConfig));
-            Debug.Log(Application.persistentDataPath + "/ConfigTest/config.xml");
-            XmlSerializer x = new(typeof(FullWaveInformation));
-            x.Serialize(writer, waveInformation);
-            writer.Close();
-        }
-
+        
         private static void DeserializeWaveData()
         {
+        }
+        
+        public static void SerializeData<T>(T data, ConfigName configLocation)
+        {
+            string location;
+            LoadConfigModules(); //TODO temp
+            switch (configLocation)
+            {
+                case ConfigName.EnemyConfig:
+                    location = _enemyXmlConfig;
+                    break;
+                case ConfigName.WaveDataConfig:
+                    location = _waveDataXmlConfig;
+                    break;
+                case ConfigName.StoreContentConfig:
+                    location = _storeContentXmlConfig;
+                    break;
+                default:
+                    location = $"{Application.persistentDataPath}/DEFAULTOUTPUTconfig.xml";
+                    //TODO create an in game console to log messages to
+                    Debug.LogError($"ERROR:: Defaulting config location to:{location}");
+                    break;
+            }
+
+            TextWriter writer = new StreamWriter(VerifyConfigExists(location));
+            Debug.Log(location);
+            XmlSerializer x = new(typeof(T));
+            x.Serialize(writer, data);
+            writer.Close();
         }
     }
 }
