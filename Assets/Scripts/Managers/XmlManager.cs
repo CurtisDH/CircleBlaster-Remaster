@@ -81,15 +81,17 @@ namespace Managers
             f.Close();
             return filePath;
         }
-
+        
         [System.Serializable]
         public struct Wave //TODO wave is containing an entire enemy type currently. Should probably only be the ID
         {
             // If a wave is spawned on the same waveID the lowest orderid will spawn first.
             public int orderID;
             public int waveIDToSpawnOn;
-            public Enemy enemyToSpawn; //TODO do i want this here? Maybe I should only reference a unique enemy id
-
+            //Surely there is a better way to safeguard this so I cant accidently mistype a unique id..
+            //Load enemies and turn their ID into enums?? Is that possible?
+            public string uniqueEnemyID; //TODO do i want this here? Maybe I should only reference a unique enemy id
+            
             public int amountToSpawn;
             //option to delay spawn
         }
