@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Managers;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.WSA;
+using Application = UnityEngine.Application;
 
 namespace Editor
 {
@@ -58,6 +60,14 @@ namespace Editor
             }
 
             GUILayout.EndHorizontal();
+            if (GUILayout.Button("Open Module Folder"))
+            {
+                EditorUtility.RevealInFinder(Application.persistentDataPath+"/Modules");
+            }
+            if (GUILayout.Button("deserialize"))
+            {
+                XmlManager.DeserializeAllData();
+            }
             GUILayout.EndScrollView();
         }
         

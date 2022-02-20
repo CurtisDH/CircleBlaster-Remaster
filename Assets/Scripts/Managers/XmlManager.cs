@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
@@ -59,7 +60,6 @@ namespace Managers
             WaveDataConfig,
             StoreContentConfig
         }
-
 
         private static void CheckIfDirectoriesExist(string[] dirs)
         {
@@ -134,11 +134,55 @@ namespace Managers
         {
             public List<Wave> Waves;
         }
-        
-        private static void DeserializeWaveData()
+
+        public static void DeserializeAllData()
         {
+            //Look through all module config folders and load the configs that are in there relative to what they represent.
+            //e.g Wave,Enemies,Store, whatever else
+            // How do we do this generically?
+
+            /*
+             * First lets get all the module directories.
+             * Then lets open up the module folder
+             * then lets try load the XML from the module folder
+             * Then we deserialize this and prepare to send it to the relevant manager 
+             */
+            LoadConfigModules();
+            var serializedEnemies = new List<Enemy>();
+            DeserializeData(serializedEnemies, ConfigName.EnemyConfig);
+            List<FullWaveInformation> waveInformation = new();
+            DeserializeData(waveInformation, ConfigName.WaveDataConfig);
+            foreach (var waveInfo in waveInformation)
+            {
+                Debug.Log(waveInfo.Waves[0].waveIDToSpawnOn);
+            }
+
+            foreach (var e in serializedEnemies)
+            {
+                Debug.Log(e.uniqueID);
+            }
         }
-        
+
+        private static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
+        {
+            var location = directoryType switch
+            {
+                ConfigName.EnemyConfig => _enemyXmlDirectory,
+                ConfigName.WaveDataConfig => _waveDataXmlDirectory,
+                ConfigName.StoreContentConfig => _storeContentXmlDirectory,
+                _ => throw new ArgumentOutOfRangeException(nameof(directoryType), directoryType, null)
+            };
+            foreach (var file in Directory.GetFiles(location))
+            {
+                XmlSerializer x = new(typeof(T));
+                TextReader reader = new StreamReader(VerifyConfigExists(file));
+                var f = (T)x.Deserialize(reader);
+                //TODO we need to ensure there are no duplicate ID's, if there is a duplicate, inform the user.
+                data.Add(f);
+            }
+        }
+
+        //TODO allow for naming the config file. 
         public static void SerializeData<T>(T data, ConfigName configLocation)
         {
             string location;
