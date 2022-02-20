@@ -163,8 +163,11 @@ namespace Managers
             }
         }
 
-        private static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
+        //TODO make private and figure out better way to get information over to wave creation editor
+        public static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
         {
+            LoadConfigModules(); //TODO REMOVE THIS
+            data ??= new List<T>();
             var location = directoryType switch
             {
                 ConfigName.EnemyConfig => _enemyXmlDirectory,
@@ -181,7 +184,7 @@ namespace Managers
                 data.Add(f);
             }
         }
-
+        
         //TODO allow for naming the config file. 
         public static void SerializeData<T>(T data, ConfigName configLocation)
         {

@@ -9,8 +9,8 @@ namespace Editor
 {
     public class WaveCreation : EditorWindow
     {
-        public XmlManager.FullWaveInformation wave = new();
-        public XmlManager.Enemy enemy = new();
+        public List<XmlManager.FullWaveInformation> wave = new();
+        public List<XmlManager.Enemy> enemy = new();
         private SerializedObject SO;
         private Vector2 scrollPos;
 
@@ -33,16 +33,18 @@ namespace Editor
             EditorGUILayout.PropertyField(SO.FindProperty("wave"));
             SO.ApplyModifiedProperties();
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Reset")) //TODO reset doesnt work.
-            {
-                wave = new XmlManager.FullWaveInformation();
-                SO.ApplyModifiedProperties();
-            }
 
             if (GUILayout.Button("Save"))
             {
                 XmlManager.SerializeData(wave, XmlManager.ConfigName.WaveDataConfig);
             }
+
+            if (GUILayout.Button("Reset"))
+            {
+                wave = new List<XmlManager.FullWaveInformation>();
+                SO.Update();
+            }
+
 
             GUILayout.EndHorizontal();
             EditorGUILayout.PropertyField(SO.FindProperty("enemy"));
@@ -53,23 +55,31 @@ namespace Editor
                 XmlManager.SerializeData(enemy, XmlManager.ConfigName.EnemyConfig);
             }
 
-            if (GUILayout.Button("Reset")) //TODO reset doesnt work.
+            if (GUILayout.Button("Reset"))
             {
-                enemy = new XmlManager.Enemy();
-                SO.ApplyModifiedProperties();
+                enemy = new List<XmlManager.Enemy>();
+                SO.Update();
             }
 
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Open Module Folder"))
             {
-                EditorUtility.RevealInFinder(Application.persistentDataPath+"/Modules");
+                EditorUtility.RevealInFinder(Application.persistentDataPath + "/Modules");
             }
+
             if (GUILayout.Button("deserialize"))
             {
                 XmlManager.DeserializeAllData();
             }
+
+            if (GUILayout.Button("Find and load all configs"))
+            {
+                XmlManager.DeserializeData(wave, XmlManager.ConfigName.WaveDataConfig);
+                XmlManager.DeserializeData(enemy, XmlManager.ConfigName.EnemyConfig);
+                SO.Update();
+            }
+
             GUILayout.EndScrollView();
         }
-        
     }
 }
