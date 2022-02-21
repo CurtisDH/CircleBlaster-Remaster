@@ -87,7 +87,7 @@ namespace Managers
         }
 
         [System.Serializable]
-        public struct Wave //TODO wave is containing an entire enemy type currently. Should probably only be the ID
+        public struct Wave
         {
             [Tooltip("If a wave is spawned on the same waveID the lowest OrderId will spawn first.")]
             public int orderID;
@@ -97,12 +97,16 @@ namespace Managers
             //Surely there is a better way to safeguard this so I cant accidently mistype a unique id..
             //Load enemies and turn their ID into enums?? Is that possible?
             [Tooltip("The enemyID that should be spawned")]
-            public string uniqueEnemyID; //TODO do i want this here? Maybe I should only reference a unique enemy id
+            public string uniqueEnemyID;
 
             public int amountToSpawn;
             //option to delay spawn
         }
-
+        [System.Serializable]
+        public struct FullWaveInformation
+        {
+            public List<Wave> Waves;
+        }
         public struct Store
         {
             //This will contain all the items that can be found in the store, what wave they can be found on
@@ -129,11 +133,7 @@ namespace Managers
         }
 
 
-        [System.Serializable]
-        public struct FullWaveInformation
-        {
-            public List<Wave> Waves;
-        }
+
 
         public static void DeserializeAllData()
         {
@@ -177,11 +177,14 @@ namespace Managers
             };
             foreach (var file in Directory.GetFiles(location))
             {
-                XmlSerializer x = new(typeof(T));
+                XmlSerializer x = new(typeof(List<T>));
                 TextReader reader = new StreamReader(VerifyConfigExists(file));
-                var f = (T)x.Deserialize(reader);
+                var f = (List<T>)x.Deserialize(reader);
                 //TODO we need to ensure there are no duplicate ID's, if there is a duplicate, inform the user.
-                data.Add(f);
+                foreach (var val in f)
+                {
+                    data.Add(val);
+                }
             }
         }
         
