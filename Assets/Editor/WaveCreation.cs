@@ -11,6 +11,7 @@ namespace Editor
     {
         public List<XmlManager.FullWaveInformation> wave = new();
         public List<XmlManager.Enemy> enemy = new();
+        public List<XmlManager.Projectile> projectile = new();
         private SerializedObject SO;
         private Vector2 scrollPos;
 
@@ -30,6 +31,39 @@ namespace Editor
         {
             scrollPos = GUILayout.BeginScrollView(scrollPos, GUILayout.Width(position.width),
                 GUILayout.Height(position.height));
+            WaveFieldLayout();
+            EnemyFieldLayout();
+            ProjectileFieldLayout();
+            Buttons();
+
+            GUILayout.EndScrollView();
+        }
+
+
+
+        private void Buttons()
+        {
+            if (GUILayout.Button("Open Module Folder"))
+            {
+                EditorUtility.RevealInFinder(Application.persistentDataPath + "/Modules");
+            }
+
+            if (GUILayout.Button("deserialize"))
+            {
+                XmlManager.DeserializeAllData();
+            }
+
+            if (GUILayout.Button("Find and load all configs"))
+            {
+                wave = XmlManager.DeserializeWaveData();
+                enemy = XmlManager.DeserializeEnemyData();
+                projectile = XmlManager.DeserializeProjectileData();
+                SO.Update();
+            }
+        }
+
+        private void WaveFieldLayout()
+        {
             EditorGUILayout.PropertyField(SO.FindProperty("wave"));
             SO.ApplyModifiedProperties();
             GUILayout.BeginHorizontal();
@@ -47,9 +81,15 @@ namespace Editor
 
 
             GUILayout.EndHorizontal();
+        }
+
+        private void EnemyFieldLayout()
+        {
             EditorGUILayout.PropertyField(SO.FindProperty("enemy"));
             SO.ApplyModifiedProperties();
             GUILayout.BeginHorizontal();
+
+            //TODO can i make these buttons generic?
             if (GUILayout.Button("Save"))
             {
                 XmlManager.SerializeData(enemy, XmlManager.ConfigName.EnemyConfig);
@@ -62,24 +102,27 @@ namespace Editor
             }
 
             GUILayout.EndHorizontal();
-            if (GUILayout.Button("Open Module Folder"))
+        }
+        
+        private void ProjectileFieldLayout()
+        {
+            EditorGUILayout.PropertyField(SO.FindProperty("projectile"));
+            SO.ApplyModifiedProperties();
+            GUILayout.BeginHorizontal();
+
+            //TODO can i make these buttons generic?
+            if (GUILayout.Button("Save"))
             {
-                EditorUtility.RevealInFinder(Application.persistentDataPath + "/Modules");
+                XmlManager.SerializeData(projectile, XmlManager.ConfigName.PlayerWeaponProjectileConfig);
             }
 
-            if (GUILayout.Button("deserialize"))
+            if (GUILayout.Button("Reset"))
             {
-                XmlManager.DeserializeAllData();
-            }
-
-            if (GUILayout.Button("Find and load all configs"))
-            {
-                XmlManager.DeserializeData(wave, XmlManager.ConfigName.WaveDataConfig);
-                XmlManager.DeserializeData(enemy, XmlManager.ConfigName.EnemyConfig);
+                projectile = new List<XmlManager.Projectile>();
                 SO.Update();
             }
 
-            GUILayout.EndScrollView();
+            GUILayout.EndHorizontal();
         }
     }
 }

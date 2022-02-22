@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Enemy;
 using PlayerScripts;
 using Unity.Netcode;
 using UnityEngine;
@@ -11,8 +13,9 @@ namespace Managers
 {
     public class SpawnManager : NetworkSingleton<SpawnManager>
     {
-        [SerializeField] private GameObject enemyTankPrefab;
-        public GameObject GetEnemyTankPrefab => enemyTankPrefab;
+        [SerializeField] private GameObject enemyBlankPrefab;
+        [SerializeField] private GameObject projectileBlankPrefab;
+        public Dictionary<string, GameObject> AllPrefabs { get; protected set; }
 
         private IReadOnlyList<NetworkClient> _activePlayerClients;
 
@@ -32,7 +35,9 @@ namespace Managers
         {
             if (Input.GetKeyDown(KeyCode.Space) && UIManager.Instance.IsHosting())
             {
-                SpawnNetworkObjectFromPrefabObject(GetEnemyTankPrefab, SetSpawnPosition());
+                //SpawnNetworkObjectFromPrefabObject(GetEnemyPrefabFromUniqueID("temp"), SetSpawnPosition());
+
+                SpawnNetworkObjectFromPrefabObject(GetObjectFromUniqueID("enemy_slow_tank"), SetSpawnPosition());
             }
         }
 
@@ -51,6 +56,7 @@ namespace Managers
             NetworkManager.Singleton.OnClientConnectedCallback -= ClientConnection;
             EventManager.Instance.OnPlayerDeath -= OnPlayerDeath;
             EventManager.Instance.OnPlayerSpawn -= OnPlayerSpawn;
+            EventManager.Instance.OnServerStart -= OnServerStart;
         }
 
         private void SubscribeEvents()
@@ -58,6 +64,55 @@ namespace Managers
             NetworkManager.Singleton.OnClientConnectedCallback += ClientConnection;
             EventManager.Instance.OnPlayerDeath += OnPlayerDeath;
             EventManager.Instance.OnPlayerSpawn += OnPlayerSpawn;
+            EventManager.Instance.OnServerStart += OnServerStart;
+        }
+
+        private void OnServerStart()
+        {
+            //Deserialize data
+            //Create enemy prefab from the given information
+            AllPrefabs = new Dictionary<string, GameObject>();
+            GeneratePrefabsFromDeserializedXML();
+        }
+
+        private void GeneratePrefabsFromDeserializedXML()
+        {
+            var allEnemyData = XmlManager.DeserializeEnemyData();
+            foreach (var e in allEnemyData)
+            {
+                var blankPrefab = Instantiate(enemyBlankPrefab);
+                var component = blankPrefab.GetComponent<EnemyBase>();
+                blankPrefab.GetComponent<NetworkObject>().Spawn();
+                component.InitialSetup(e.speed, e.damage, e.colours, e.health, e.scale, e.uniqueID);
+                AllPrefabs.Add(e.uniqueID, component.gameObject);
+                blankPrefab.name = $"Enemy:{e.uniqueID}";
+                blankPrefab.SetActive(false);
+            }
+
+            var projectileData = XmlManager.DeserializeProjectileData();
+            //TODO why don't we just dynamically create them instead of having a blank prefab..
+            foreach (var p in projectileData)
+            {
+                var blankPrefab = Instantiate(projectileBlankPrefab);
+                var component = blankPrefab.GetComponent<Projectile>();
+                blankPrefab.GetComponent<NetworkObject>().Spawn();
+                component.InitialSetup(p.speed, p.damage, p.colours, p.pierce,
+                    p.scale, p.uniqueID);
+                AllPrefabs.Add(p.uniqueID, component.gameObject);
+                blankPrefab.name = $"Projectile:{p.uniqueID}";
+                blankPrefab.SetActive(false);
+            }
+
+            EventManager.Instance.InvokeOnDataDeserialization();
+        }
+
+
+        public GameObject GetObjectFromUniqueID(string uniqueID)
+        {
+            if (AllPrefabs.ContainsKey(uniqueID))
+                return AllPrefabs[uniqueID];
+            Debug.LogWarning($"Provided uniqueID:{uniqueID} was not found in the dictionary.");
+            return null;
         }
 
         private void OnPlayerSpawn(Player playercomponent)
@@ -169,7 +224,7 @@ namespace Managers
         {
             return alivePlayers.Count > 0 ? alivePlayers[0] : null;
         }
-        
+
         public List<GameObject> GetAllAlivePlayers()
         {
             return alivePlayers;

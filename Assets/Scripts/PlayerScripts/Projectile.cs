@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Enemy;
 using Managers;
 using Particle_Scripts;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 using Utility.Text;
 
@@ -23,6 +25,10 @@ public class Projectile : NetworkBehaviour
 
     //This currently only determines whether or not it should be in the client pool. It will influence hit reg later on.
     [SerializeField] private bool _isServerProjectile = true;
+    [SerializeField] private SpriteRenderer[] spriteRenderers;
+    [SerializeField] private List<Color> colours;
+
+    [SerializeField] private string projectileUniqueID;
 
     public bool IsClientProjectile()
     {
@@ -32,6 +38,8 @@ public class Projectile : NetworkBehaviour
     private int _pierceLevel;
     [SerializeField] private Vector2 startPos;
     private Transform _weaponTransform;
+    private bool _initialSetupCompleted;
+    private float scale;
 
     private const int DespawnRange = 50;
 
@@ -48,7 +56,7 @@ public class Projectile : NetworkBehaviour
         projectileSpeed = speed + SpeedIncrement;
         _pierceLevel = pierce;
     }
-
+    
     private void Update()
     {
         if (transform.position.y >= startPos.y + DespawnRange ||
@@ -105,12 +113,39 @@ public class Projectile : NetworkBehaviour
 
     private void OnDisable()
     {
-        ObjectPooling.Instance.PoolObject(this);
+        ObjectPooling.Instance.PoolUniqueIDObject(projectileUniqueID,this);
+        
     }
 
     [ServerRpc]
     private void DespawnProjectileServerRPC()
     {
         networkObject.Despawn();
+    }
+
+    public void InitialSetup(float pSpeed, float pDamage, List<Color> pColours, int pPierce, float pScale, string pUniqueID)
+    {
+        if (_initialSetupCompleted)
+        { 
+            return;
+        }
+        projectileSpeed = pSpeed;
+        projectileDamage = pDamage;
+        colours = pColours;
+        _pierceLevel = pPierce;
+        scale = pScale;
+        projectileUniqueID = pUniqueID;
+        foreach (var sr in spriteRenderers)
+        {
+            if (colours.Count <= 0) continue;
+
+            sr.color = colours[^1];
+
+            colours.RemoveAt(colours.Count - 1);
+            sr.transform.localScale += new Vector3(scale,scale,scale);
+            continue;
+        }
+        _initialSetupCompleted = true;
+
     }
 }

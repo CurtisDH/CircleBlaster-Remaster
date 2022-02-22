@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using Managers;
 using Particle_Scripts;
@@ -8,9 +8,20 @@ using Utility;
 
 namespace Enemy
 {
-    public abstract class EnemyBase : NetworkBehaviour
+    public class EnemyBase : NetworkBehaviour
     {
+        // public static EnemyBase CreateInstance(float speed, float damage,List<Color> colours,float initialHealth)
+        // {
+        //     EnemyBase eBase = new EnemyBase();
+        //     eBase.speed = speed;
+        //     eBase.damage = damage;
+        //     eBase.colours = colours;
+        //     eBase.initialHealth = initialHealth;
+        //     return eBase;
+        // }
+
         [SerializeField] public NetworkObject networkObject;
+
 
         //[SerializeField] private float health;
         [SerializeField] private float speed;
@@ -24,6 +35,12 @@ namespace Enemy
         [SerializeField] private Transform closestPlayerTransform;
         private bool _colourConfigured;
 
+        [SerializeField]
+        private float _scale;
+        private string _uniqueID;
+        [SerializeField]
+        private bool _initialSetupCompleted;
+
         public void SetClosestPlayerTransform(Transform transform)
         {
             closestPlayerTransform = transform;
@@ -31,23 +48,38 @@ namespace Enemy
 
         private void OnEnable()
         {
+            StartCoroutine(SetupEnemy());
+        }
+
+        IEnumerator SetupEnemy()
+        {
+            while (!_initialSetupCompleted)
+            {
+                yield return new WaitForSeconds(1);
+            }
+
             SubscribeEvents();
 
             if (_colourConfigured)
             {
-                return;
+                yield return null;
             }
+
+            gameObject.name = _uniqueID; //TODO should we use a public name here instead
 
             foreach (var sr in spriteRenderers)
             {
                 if (colours.Count <= 0) continue;
 
                 sr.color = colours[^1];
+
                 colours.RemoveAt(colours.Count - 1);
+                sr.transform.localScale += new Vector3(_scale,_scale,_scale);
                 continue;
             }
 
             _colourConfigured = true;
+            yield return null;
         }
 
         private void SubscribeEvents()
@@ -79,6 +111,11 @@ namespace Enemy
 
         private void OnDisable()
         {
+            if (!_initialSetupCompleted)
+            {
+                return;
+            }
+
             OnDeath();
             if (!IsServer) return;
 
@@ -106,7 +143,8 @@ namespace Enemy
         [ServerRpc]
         private void DespawnEnemyServerRpc()
         {
-            networkObject.Despawn();
+            if (networkObject.IsSpawned)
+                networkObject.Despawn();
         }
 
 
@@ -143,6 +181,22 @@ namespace Enemy
             }
 
             EventManager.Instance.InvokeOnEnemyHitEvent(col.gameObject, damage);
+        }
+
+        public void InitialSetup(float eSpeed, float eDamage, List<Color> eColours, float eHealth,
+            float eScale, string eUniqueID)
+        {
+            this.speed = eSpeed;
+            this.damage = eDamage;
+            this.colours = eColours;
+            this.initialHealth = eHealth;
+            this._scale = eScale;
+            this._uniqueID = eUniqueID;
+            if (IsServer)
+            {
+                health.Value = initialHealth;
+            }
+            _initialSetupCompleted = true;
         }
     }
 }

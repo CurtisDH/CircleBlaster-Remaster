@@ -21,17 +21,34 @@ namespace Utility
 
         private HashSet<GameObject> _prefabs = new HashSet<GameObject>();
 
-        private Dictionary<GameObject, Queue<NetworkObject>> pooledObjects = new Dictionary<GameObject, Queue<NetworkObject>>();
+        private Dictionary<GameObject, Queue<NetworkObject>> pooledObjects =
+            new Dictionary<GameObject, Queue<NetworkObject>>();
 
         private bool _hasInitialized;
 
         private void OnEnable()
         {
-            EventManager.Instance.OnServerStart += OnNetworkSpawn;
+            EventManager.Instance.OnDataDeserialization += OnDataDeserializationReady;
+            // Need an event for Deserialization
+            //Wait for XML's to be deserialized
+            //Then populate the network pool
+            //And initialize it.
         }
 
-        public override void OnNetworkSpawn()
+        private void SetupPoolFromDeserializedXML()
         {
+            foreach (var valuePair in SpawnManager.Instance.AllPrefabs)
+            {
+                PoolConfigObject newObjectConfig = new PoolConfigObject();
+                newObjectConfig.uniqueID = valuePair.Key;
+                newObjectConfig.PrewarmCount = 500; //TODO replace with generic cache count
+                pooledPrefabsList.Add(newObjectConfig);
+            }
+        }
+
+        private void OnDataDeserializationReady()
+        {
+            SetupPoolFromDeserializedXML();
             InitializePool();
         }
 
@@ -44,7 +61,7 @@ namespace Utility
         {
             for (var i = 0; i < pooledPrefabsList.Count; i++)
             {
-                var prefab = pooledPrefabsList[i].Prefab;
+                var prefab = SpawnManager.Instance.AllPrefabs[pooledPrefabsList[i].uniqueID];
                 if (prefab != null)
                 {
                     Assert.IsNotNull(prefab.GetComponent<NetworkObject>(),
@@ -85,6 +102,7 @@ namespace Utility
         {
             var go = networkObject.gameObject;
             go.SetActive(false);
+
             pooledObjects[prefab].Enqueue(networkObject);
         }
 
@@ -164,7 +182,8 @@ namespace Utility
             if (_hasInitialized) return;
             foreach (var configObject in pooledPrefabsList)
             {
-                RegisterPrefabInternal(configObject.Prefab, configObject.PrewarmCount);
+                RegisterPrefabInternal(SpawnManager.Instance.AllPrefabs[configObject.uniqueID],
+                    configObject.PrewarmCount);
             }
 
             _hasInitialized = true;
@@ -188,7 +207,7 @@ namespace Utility
     [Serializable]
     internal struct PoolConfigObject
     {
-        public GameObject Prefab;
+        public string uniqueID;
         public int PrewarmCount;
     }
 

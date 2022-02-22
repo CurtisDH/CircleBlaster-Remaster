@@ -31,15 +31,23 @@ namespace PlayerScripts
 
         private bool _playerReady;
         private bool _playerCanMove;
+        [SerializeField]
+        private string playerWeaponUniqueID = "weapon_fast";
 
         private void OnEnable()
+        {
+            EventManager.Instance.OnDataDeserialization += OnDataDeserialization;
+
+            //TODO Allow customisation within a UI menu.
+        }
+
+        private void OnDataDeserialization()
         {
             if (!_playerReady)
             {
                 StartCoroutine(InitialisePlayer());
                 return;
             }
-            //TODO Allow customisation within a UI menu.
         }
 
         public void SetDeathValue(bool value)
@@ -230,10 +238,11 @@ namespace PlayerScripts
             if (Input.GetKeyDown(KeybindManager.Instance.shootPrimary))
             {
                 //Client
-                var projectile = ObjectPooling.Instance.RequestComponentFromPool<Projectile>();
-                projectile.ProjectileSetup(teamID, moveSpeed, 1);
-
-                projectile.ProjectileSetup(teamID, moveSpeed, 1);
+                var projectile = ObjectPooling.Instance.RequestComponentUsingUniqueID<Projectile>(playerWeaponUniqueID);
+                //TODO do this by id, otherwise we wont have customisable projectiles.
+                //projectile.ProjectileSetup(teamID, moveSpeed, 1);
+                //TODO projectile needs to be based on whatever weapon is equipped
+                //TODO the entire weapon system
                 projectile.SetServerProjectileStatus(false);
                 SetupProjectilePosition(projectile.gameObject);
                 //Server
@@ -243,15 +252,18 @@ namespace PlayerScripts
                     id = UInt64.MaxValue;
                 }
 
-                RequestProjectileSpawnServerRPC(id);
+                RequestProjectileSpawnServerRPC(id,playerWeaponUniqueID);
             }
         }
 
         [ServerRpc]
-        private void RequestProjectileSpawnServerRPC(ulong clientID)
+        private void RequestProjectileSpawnServerRPC(ulong clientID,string projectileID)
         {
+            //TODO probably gonna error here
             var id = clientID;
-            var projectile = NetworkObjectPooling.Instance.GetNetworkObject(projectilePrefab);
+            var projectile =
+                NetworkObjectPooling.Instance.GetNetworkObject(
+                    SpawnManager.Instance.GetObjectFromUniqueID(playerWeaponUniqueID));
             SetupProjectilePosition(projectile.gameObject);
             projectile.Spawn();
             //Stops the client from seeing the server sided projectile they just fired.

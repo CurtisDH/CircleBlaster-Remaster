@@ -32,16 +32,19 @@ namespace Managers
         private static string _enemyXmlDirectory;
         private static string _waveDataXmlDirectory;
         private static string _storeContentXmlDirectory;
+        private static string _playerWeaponProjectileContentXmlDirectory;
 
         private static string _enemyXmlConfig;
         private static string _waveDataXmlConfig;
         private static string _storeContentXmlConfig;
+        private static string _playerWeaponProjectileConfig;
 
-        private static void LoadConfigModules()
+        private static void SetupPaths()
         {
             _enemyXmlDirectory = $"{Application.persistentDataPath}/Modules/Enemies";
             _waveDataXmlDirectory = $"{Application.persistentDataPath}/Modules/WaveData";
             _storeContentXmlDirectory = $"{Application.persistentDataPath}/Modules/Store";
+            _playerWeaponProjectileContentXmlDirectory = $"{Application.persistentDataPath}/Modules/Weapons";
             //TODO load the whole directory , i.e. we would have 10 separate enemy.xml to allow to easy modification
             //Alternatively we could have one massive xml holding the data and still load the whole folder
             // This would also allow for custom enemies to be added without modifying the original content.
@@ -49,8 +52,13 @@ namespace Managers
 
             _waveDataXmlConfig = $"{_waveDataXmlDirectory}/waveData.xml";
             _storeContentXmlConfig = $"{_storeContentXmlDirectory}/storeContent.xml";
+            _playerWeaponProjectileConfig = $"{_playerWeaponProjectileContentXmlDirectory}/playerWeaponProjectiles.xml";
 
-            string[] directories = { _enemyXmlDirectory, _waveDataXmlDirectory, _storeContentXmlDirectory };
+            string[] directories =
+            {
+                _enemyXmlDirectory, _waveDataXmlDirectory, _storeContentXmlDirectory,
+                _playerWeaponProjectileContentXmlDirectory
+            };
             CheckIfDirectoriesExist(directories);
         }
 
@@ -58,7 +66,8 @@ namespace Managers
         {
             EnemyConfig,
             WaveDataConfig,
-            StoreContentConfig
+            StoreContentConfig,
+            PlayerWeaponProjectileConfig
         }
 
         private static void CheckIfDirectoriesExist(string[] dirs)
@@ -102,11 +111,13 @@ namespace Managers
             public int amountToSpawn;
             //option to delay spawn
         }
+
         [System.Serializable]
         public struct FullWaveInformation
         {
             public List<Wave> Waves;
         }
+
         public struct Store
         {
             //This will contain all the items that can be found in the store, what wave they can be found on
@@ -119,7 +130,7 @@ namespace Managers
         [System.Serializable]
         public struct Enemy
         {
-            [Tooltip("A string that is used to identify this enemy")]
+            [Tooltip("A string that is used to identify this Object")]
             public string uniqueID;
 
             public string displayName;
@@ -128,12 +139,31 @@ namespace Managers
             public float speed;
             public float damage;
 
-            [Tooltip("Cant remember how this works honestly, gotta come back to this")] //TODO fix
+            [Tooltip(
+                "The first three colours will be used in the following order: Inner circle, outer circle, Outline")]
             public List<Color> colours;
         }
 
 
+        [System.Serializable]
+        public struct Projectile //TODO num of projectiles | Shotgun based mechanic?
+        {
+            [Tooltip("A string that is used to identify this Object")]
+            public string uniqueID;
 
+            public string displayName;
+            [Tooltip("Size of the Object")] public float scale;
+
+            [Tooltip("How many enemies does it take before the projectile gets stopped")]
+            public int pierce;
+
+            public float speed;
+            public float damage;
+
+            [Tooltip(
+                "The first three colours will be used in the following order: Inner circle, outer circle, Outline")]
+            public List<Color> colours;
+        }
 
         public static void DeserializeAllData()
         {
@@ -147,32 +177,44 @@ namespace Managers
              * then lets try load the XML from the module folder
              * Then we deserialize this and prepare to send it to the relevant manager 
              */
-            LoadConfigModules();
-            var serializedEnemies = new List<Enemy>();
-            DeserializeData(serializedEnemies, ConfigName.EnemyConfig);
-            List<FullWaveInformation> waveInformation = new();
-            DeserializeData(waveInformation, ConfigName.WaveDataConfig);
-            foreach (var waveInfo in waveInformation)
-            {
-                Debug.Log(waveInfo.Waves[0].waveIDToSpawnOn);
-            }
-
-            foreach (var e in serializedEnemies)
-            {
-                Debug.Log(e.uniqueID);
-            }
+            SetupPaths();
+            var deserializedEnemies = DeserializeEnemyData();
+            List<FullWaveInformation> waveInformation = DeserializeWaveData();
         }
 
-        //TODO make private and figure out better way to get information over to wave creation editor
-        public static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
+        
+        
+        //TODO this is dumb make it generic as it was previously
+        public static List<Enemy> DeserializeEnemyData()
         {
-            LoadConfigModules(); //TODO REMOVE THIS
+            var deserializeEnemyData = new List<Enemy>();
+            DeserializeData(deserializeEnemyData, ConfigName.EnemyConfig);
+            return deserializeEnemyData;
+        }
+        
+        public static List<XmlManager.Projectile> DeserializeProjectileData()
+        {
+            var projectileData = new List<XmlManager.Projectile>();
+            DeserializeData(projectileData, ConfigName.PlayerWeaponProjectileConfig);
+            return projectileData;
+        }
+        public static List<FullWaveInformation> DeserializeWaveData()
+        {
+            List<FullWaveInformation> waveInformation = new();
+            DeserializeData(waveInformation, ConfigName.WaveDataConfig);
+            return waveInformation;
+        }
+
+        private static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
+        {
+            SetupPaths();
             data ??= new List<T>();
             var location = directoryType switch
             {
                 ConfigName.EnemyConfig => _enemyXmlDirectory,
                 ConfigName.WaveDataConfig => _waveDataXmlDirectory,
                 ConfigName.StoreContentConfig => _storeContentXmlDirectory,
+                ConfigName.PlayerWeaponProjectileConfig => _playerWeaponProjectileContentXmlDirectory,
                 _ => throw new ArgumentOutOfRangeException(nameof(directoryType), directoryType, null)
             };
             foreach (var file in Directory.GetFiles(location))
@@ -185,14 +227,16 @@ namespace Managers
                 {
                     data.Add(val);
                 }
+
+                reader.Close();
             }
         }
-        
+
         //TODO allow for naming the config file. 
         public static void SerializeData<T>(T data, ConfigName configLocation)
         {
             string location;
-            LoadConfigModules(); //TODO temp
+            SetupPaths(); //TODO temp
             switch (configLocation)
             {
                 case ConfigName.EnemyConfig:
@@ -203,6 +247,9 @@ namespace Managers
                     break;
                 case ConfigName.StoreContentConfig:
                     location = _storeContentXmlConfig;
+                    break;
+                case ConfigName.PlayerWeaponProjectileConfig:
+                    location = _playerWeaponProjectileConfig;
                     break;
                 default:
                     location = $"{Application.persistentDataPath}/DEFAULTOUTPUTconfig.xml";

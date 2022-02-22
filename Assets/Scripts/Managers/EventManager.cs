@@ -95,11 +95,20 @@ namespace Managers
                 Debug.Log(message);
             }
         }
-
+        
         public void InvokeOnEndGameEvent()
         {
             TrackEvent("InvokeEndGameEvent");
             OnEndGameEvent?.Invoke();
         }
+
+        public Action OnDataDeserialization;
+        public void InvokeOnDataDeserialization()
+        {
+            TrackEvent("OnDataDeserialization");
+            OnDataDeserialization?.Invoke();
+        }
+        
+        //TODO generalise this class
     }
 }

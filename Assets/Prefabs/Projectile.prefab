@@ -54,6 +54,10 @@ MonoBehaviour:
   networkObject: {fileID: -8495596148090576586}
   hitTarget: {fileID: 0}
   _isServerProjectile: 1
+  spriteRenderers:
+  - {fileID: 5401915641730266022}
+  - {fileID: 1947951634197781948}
+  colours: []
   startPos: {x: 0.40104553, y: -0.44627634}
 --- !u!114 &-8495596148090576586
 MonoBehaviour:
