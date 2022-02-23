@@ -2,12 +2,11 @@ using System.Collections.Generic;
 using Managers;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.WSA;
 using Application = UnityEngine.Application;
 
 namespace Editor
 {
-    public class WaveCreation : EditorWindow
+    public class XmlEditor : EditorWindow
     {
         public List<XmlManager.FullWaveInformation> wave = new();
         public List<XmlManager.Enemy> enemy = new();
@@ -19,7 +18,7 @@ namespace Editor
         [MenuItem("Custom Editors/Wave Creator")]
         public static void ShowWindow()
         {
-            WaveCreation.GetWindow(typeof(WaveCreation));
+            XmlEditor.GetWindow(typeof(XmlEditor));
         }
 
         private void OnEnable()

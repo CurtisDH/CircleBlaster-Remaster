@@ -59,6 +59,7 @@
      <Compile Include="Assets\Scripts\Managers\EventManager.cs" />
      <Compile Include="Assets\Scripts\Managers\XmlManager.cs" />
      <Compile Include="Assets\Scripts\Particle Scripts\PlayerCollisionProjectileParticle.cs" />
+     <Compile Include="Assets\Scripts\Managers\WaveManager.cs" />
      <Compile Include="Assets\Scripts\Enemy\EnemyDetectionCollider.cs" />
      <Compile Include="Assets\Scripts\Managers\PlayerConnectionManager.cs" />
      <Compile Include="Assets\Scripts\Managers\SpawnManager.cs" />

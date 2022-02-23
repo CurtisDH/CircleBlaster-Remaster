@@ -16,7 +16,7 @@ namespace PlayerScripts
         [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
         [SerializeField] private PlayerWeapon weapon;
         [SerializeField] private float initialHealth = 100f;
-        [SerializeField] private NetworkVariable<float> health;
+        public NetworkVariable<float> health;
         [SerializeField] private NetworkVariable<bool> isDead;
 
         //Camera script instead.
@@ -263,7 +263,7 @@ namespace PlayerScripts
             var id = clientID;
             var projectile =
                 NetworkObjectPooling.Instance.GetNetworkObject(
-                    SpawnManager.Instance.GetObjectFromUniqueID(playerWeaponUniqueID));
+                    SpawnManager.Instance.GetObjectFromUniqueID(projectileID));
             SetupProjectilePosition(projectile.gameObject);
             projectile.Spawn();
             //Stops the client from seeing the server sided projectile they just fired.

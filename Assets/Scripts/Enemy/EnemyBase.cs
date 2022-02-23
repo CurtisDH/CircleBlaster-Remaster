@@ -10,20 +10,8 @@ namespace Enemy
 {
     public class EnemyBase : NetworkBehaviour
     {
-        // public static EnemyBase CreateInstance(float speed, float damage,List<Color> colours,float initialHealth)
-        // {
-        //     EnemyBase eBase = new EnemyBase();
-        //     eBase.speed = speed;
-        //     eBase.damage = damage;
-        //     eBase.colours = colours;
-        //     eBase.initialHealth = initialHealth;
-        //     return eBase;
-        // }
-
         [SerializeField] public NetworkObject networkObject;
 
-
-        //[SerializeField] private float health;
         [SerializeField] private float speed;
         [SerializeField] private float damage;
         [SerializeField] private List<Color> colours;
@@ -35,11 +23,9 @@ namespace Enemy
         [SerializeField] private Transform closestPlayerTransform;
         private bool _colourConfigured;
 
-        [SerializeField]
-        private float _scale;
+        [SerializeField] private float _scale;
         private string _uniqueID;
-        [SerializeField]
-        private bool _initialSetupCompleted;
+        [SerializeField] private bool _initialSetupCompleted;
 
         public void SetClosestPlayerTransform(Transform transform)
         {
@@ -74,7 +60,7 @@ namespace Enemy
                 sr.color = colours[^1];
 
                 colours.RemoveAt(colours.Count - 1);
-                sr.transform.localScale += new Vector3(_scale,_scale,_scale);
+                sr.transform.localScale += new Vector3(_scale, _scale, _scale);
                 continue;
             }
 
@@ -196,6 +182,7 @@ namespace Enemy
             {
                 health.Value = initialHealth;
             }
+
             _initialSetupCompleted = true;
         }
     }

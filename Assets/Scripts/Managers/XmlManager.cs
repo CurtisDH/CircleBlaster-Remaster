@@ -101,6 +101,8 @@ namespace Managers
             [Tooltip("If a wave is spawned on the same waveID the lowest OrderId will spawn first.")]
             public int orderID;
 
+            [Tooltip("How long between spawns (In seconds)")] public float delayBetweenSpawns; 
+            
             [Tooltip("When the wave will spawn")] public int waveIDToSpawnOn;
 
             //Surely there is a better way to safeguard this so I cant accidently mistype a unique id..

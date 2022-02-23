@@ -24,7 +24,7 @@ namespace Managers
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
 
-        private void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position, bool enemyType = true)
+        public void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position, bool enemyType = true)
         {
             var prefabObject = NetworkObjectPooling.Instance.GetNetworkObject(prefab);
             prefabObject.transform.position = position;
@@ -129,7 +129,7 @@ namespace Managers
             }
         }
 
-        private Vector3 SetSpawnPosition()
+        public Vector3 SetSpawnPosition()
         {
             return RandomPointOnCircleEdge(FindCenterBetweenPlayers(),
                 FindRadiusBetweenPlayers());

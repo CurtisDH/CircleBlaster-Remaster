@@ -1,10 +1,9 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using Enemy;
+using PlayerScripts;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 using Utility.Text;
 
@@ -16,13 +15,15 @@ namespace Managers
 
         //We don't want a player to spawn during a wave.
         [SerializeField] private NetworkVariable<bool> isWaveActive = new();
-        [SerializeField] private NetworkVariable<int> waveRound = new();
+        [SerializeField] public NetworkVariable<int> waveRound = new();
         [SerializeField] private NetworkVariable<bool> endGame = new();
         [SerializeField] private List<EnemyBase> activeEnemies = new();
 
         [SerializeField] private GameObject storeGameObject;
-        [SerializeField] private float storeTimerFloat = 20f;
+        [SerializeField] private float storeTimerFloat = 10f; //TODO start wave early button (VOTE SYSTEM?)
         private WaitForSeconds _storeTimerWaitForSeconds;
+
+        //todo why do i not have a reference to the alive player components here
 
         private void OnEnable()
         {
@@ -111,19 +112,53 @@ namespace Managers
                 }
 
                 EventManager.Instance.InvokeOnWaveComplete(waveRound.Value);
+                OnWaveComplete();
                 //Enable store
-                EnableStore(true);
                 //Enter collision trigger to open store menu automatically
-                StartCoroutine(SpawnPendingAndDeadPlayers());
-                //Start countdown timer till next wave
-                StartCoroutine(NextWaveTimer());
                 //Ability to ready up before timer?
-
+                //Start countdown timer till next wave
                 //Give wave info??
                 //Ideally want to make the world more interactive -- Informative UI is all worldspace
                 //If you're out of position then you wont be able to get the info.
                 // Wave info spawns with an arrow pointing to it?
                 // Store spawns at 0,0,0? || Could spawn randomly and setup a script to display location with arrow.
+            }
+        }
+
+        private void OnWaveComplete()
+        {
+            EnableStore(true);
+
+            StartCoroutine(SpawnPendingAndDeadPlayers());
+            HealAllPlayers(waveRound.Value);
+            StartCoroutine(NextWaveTimer());
+        }
+
+        private void HealAllPlayers(int waveRoundValue)
+        {
+            if (!IsServer) return;
+
+            foreach (var player in PlayerConnectionManager.Instance.ConnectedPlayerComponents)
+            {
+                player.health.Value += waveRoundValue;
+
+                //Tell the player how much they healed by
+                //Maybe a healing particle effect that gets played //TODO
+                //Make this look better, looks horrible right now
+                StartCoroutine(SlowHealPlayer(player, 0.1f, waveRoundValue));
+
+            }
+        }
+        //Looks better but still not great. Good enough until the reskin
+        IEnumerator SlowHealPlayer(Player player, float delay, float waveRoundValue)
+        {
+            WaitForSeconds wfs = new WaitForSeconds(delay);
+            for (int i = 0; i < waveRoundValue; i++)
+            {
+                yield return wfs;
+                GenerateWorldSpaceText.CreateWorldSpaceTextPopup($"+{1}",
+                    player.transform.position, 1f, 2, Color.green, .1f,
+                    0, true);
             }
         }
 
@@ -158,14 +193,30 @@ namespace Managers
 
         private IEnumerator NextWaveTimer()
         {
+            List<TextPopup> textPopups = new();
+            foreach (var player in SpawnManager.Instance.GetAllAlivePlayers())
+            {
+                var text = GenerateWorldSpaceText.CreateWorldSpaceTextPopup($"Next wave in: {storeTimerFloat}",
+                    player.transform.position, 0, storeTimerFloat, Color.yellow, .25f);
+                text.transform.parent = player.transform;
+                textPopups.Add(text);
+            }
+
             var counter = 0;
             while (counter < storeTimerFloat)
             {
+                foreach (var txtPopup in textPopups)
+                {
+                    txtPopup.textMeshComponent.text = $"Next wave in: {storeTimerFloat - counter}";
+                }
+
                 yield return _storeTimerWaitForSeconds;
                 counter++;
             }
 
             EnableStore(false);
+            if (IsServer)
+                WaveManager.Instance.StartNextWaveServerRPC();
         }
 
         private void UnsubscribeEvents()
