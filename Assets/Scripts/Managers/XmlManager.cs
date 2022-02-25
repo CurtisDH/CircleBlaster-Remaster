@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Managers
@@ -34,12 +36,14 @@ namespace Managers
         private static string _storeContentXmlDirectory;
         private static string _playerWeaponProjectileContentXmlDirectory;
 
+        private static string[] _directories;
+
         private static string _enemyXmlConfig;
         private static string _waveDataXmlConfig;
         private static string _storeContentXmlConfig;
         private static string _playerWeaponProjectileConfig;
 
-        private static void SetupPaths()
+        public static void SetupPaths()
         {
             _enemyXmlDirectory = $"{Application.persistentDataPath}/Modules/Enemies";
             _waveDataXmlDirectory = $"{Application.persistentDataPath}/Modules/WaveData";
@@ -54,12 +58,12 @@ namespace Managers
             _storeContentXmlConfig = $"{_storeContentXmlDirectory}/storeContent.xml";
             _playerWeaponProjectileConfig = $"{_playerWeaponProjectileContentXmlDirectory}/playerWeaponProjectiles.xml";
 
-            string[] directories =
+            _directories = new[]
             {
                 _enemyXmlDirectory, _waveDataXmlDirectory, _storeContentXmlDirectory,
                 _playerWeaponProjectileContentXmlDirectory
             };
-            CheckIfDirectoriesExist(directories);
+            CheckIfDirectoriesExist(_directories);
         }
 
         public enum ConfigName
@@ -83,11 +87,16 @@ namespace Managers
             }
         }
 
-        private static string VerifyConfigExists(string filePath)
+        public static string VerifyConfigExists(string filePath)
         {
             if (File.Exists(filePath))
             {
                 return filePath;
+            }
+
+            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(filePath));
             }
 
             var f = File.Create(filePath);
@@ -96,13 +105,14 @@ namespace Managers
         }
 
         [System.Serializable]
-        public struct Wave
+        public struct Wave : INetworkSerializable
         {
             [Tooltip("If a wave is spawned on the same waveID the lowest OrderId will spawn first.")]
             public int orderID;
 
-            [Tooltip("How long between spawns (In seconds)")] public float delayBetweenSpawns; 
-            
+            [Tooltip("How long between spawns (In seconds)")]
+            public float delayBetweenSpawns;
+
             [Tooltip("When the wave will spawn")] public int waveIDToSpawnOn;
 
             //Surely there is a better way to safeguard this so I cant accidently mistype a unique id..
@@ -111,7 +121,16 @@ namespace Managers
             public string uniqueEnemyID;
 
             public int amountToSpawn;
+
             //option to delay spawn
+            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+            {
+                serializer.SerializeValue(ref orderID);
+                serializer.SerializeValue(ref delayBetweenSpawns);
+                serializer.SerializeValue(ref waveIDToSpawnOn);
+                serializer.SerializeValue(ref uniqueEnemyID);
+                serializer.SerializeValue(ref amountToSpawn);
+            }
         }
 
         [System.Serializable]
@@ -130,7 +149,7 @@ namespace Managers
         }
 
         [System.Serializable]
-        public struct Enemy
+        public struct Enemy : INetworkSerializable
         {
             [Tooltip("A string that is used to identify this Object")]
             public string uniqueID;
@@ -144,11 +163,20 @@ namespace Managers
             [Tooltip(
                 "The first three colours will be used in the following order: Inner circle, outer circle, Outline")]
             public List<Color> colours;
+
+            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+            {
+                serializer.SerializeValue(ref uniqueID);
+                serializer.SerializeValue(ref displayName);
+                serializer.SerializeValue(ref health);
+                serializer.SerializeValue(ref speed);
+                serializer.SerializeValue(ref damage);
+            }
         }
 
 
         [System.Serializable]
-        public struct Projectile //TODO num of projectiles | Shotgun based mechanic?
+        public struct Projectile : INetworkSerializable //TODO num of projectiles | Shotgun based mechanic?
         {
             [Tooltip("A string that is used to identify this Object")]
             public string uniqueID;
@@ -165,6 +193,15 @@ namespace Managers
             [Tooltip(
                 "The first three colours will be used in the following order: Inner circle, outer circle, Outline")]
             public List<Color> colours;
+
+            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+            {
+                serializer.SerializeValue(ref uniqueID);
+                serializer.SerializeValue(ref displayName);
+                serializer.SerializeValue(ref pierce);
+                serializer.SerializeValue(ref speed);
+                serializer.SerializeValue(ref damage);
+            }
         }
 
         public static void DeserializeAllData()
@@ -181,42 +218,65 @@ namespace Managers
              */
             SetupPaths();
             var deserializedEnemies = DeserializeEnemyData();
-            List<FullWaveInformation> waveInformation = DeserializeWaveData();
+            List<XmlManager.FullWaveInformation> waveInformation = DeserializeWaveData();
         }
 
-        
-        
+        public static Dictionary<string, Byte[]> GetAllFileByteArrays()
+        {
+            var data = new Dictionary<string, Byte[]>();
+            SetupPaths();
+            foreach (var directory in _directories)
+            {
+                Debug.Log($"directory:{directory}");
+                foreach (var file in Directory.GetFiles(directory))
+                {
+                    Debug.Log($"File:{file}");
+
+                    var byteArray = File.ReadAllBytes(file);
+                    data.Add(file, byteArray);
+                }
+            }
+
+
+            //Search all directories.
+            //Grab the path to that directory
+            //Return that file
+            return data;
+        }
+
+
         //TODO this is dumb make it generic as it was previously
         public static List<Enemy> DeserializeEnemyData()
         {
             var deserializeEnemyData = new List<Enemy>();
-            DeserializeData(deserializeEnemyData, ConfigName.EnemyConfig);
+            DeserializeData(deserializeEnemyData, XmlManager.ConfigName.EnemyConfig);
             return deserializeEnemyData;
         }
-        
+
         public static List<XmlManager.Projectile> DeserializeProjectileData()
         {
             var projectileData = new List<XmlManager.Projectile>();
-            DeserializeData(projectileData, ConfigName.PlayerWeaponProjectileConfig);
+            DeserializeData(projectileData, XmlManager.ConfigName.PlayerWeaponProjectileConfig);
             return projectileData;
         }
-        public static List<FullWaveInformation> DeserializeWaveData()
+
+        public static List<XmlManager.FullWaveInformation> DeserializeWaveData()
         {
-            List<FullWaveInformation> waveInformation = new();
-            DeserializeData(waveInformation, ConfigName.WaveDataConfig);
+            List<XmlManager.FullWaveInformation> waveInformation = new();
+            DeserializeData(waveInformation, XmlManager.ConfigName.WaveDataConfig);
             return waveInformation;
         }
 
-        private static void DeserializeData<T>(ICollection<T> data, ConfigName directoryType)
+        private static void DeserializeData<T>(ICollection<T> data, XmlManager.ConfigName directoryType)
         {
             SetupPaths();
             data ??= new List<T>();
             var location = directoryType switch
             {
-                ConfigName.EnemyConfig => _enemyXmlDirectory,
-                ConfigName.WaveDataConfig => _waveDataXmlDirectory,
-                ConfigName.StoreContentConfig => _storeContentXmlDirectory,
-                ConfigName.PlayerWeaponProjectileConfig => _playerWeaponProjectileContentXmlDirectory,
+                XmlManager.ConfigName.EnemyConfig => _enemyXmlDirectory,
+                XmlManager.ConfigName.WaveDataConfig => _waveDataXmlDirectory,
+                XmlManager.ConfigName.StoreContentConfig => _storeContentXmlDirectory,
+                XmlManager.ConfigName.PlayerWeaponProjectileConfig => _playerWeaponProjectileContentXmlDirectory,
                 _ => throw new ArgumentOutOfRangeException(nameof(directoryType), directoryType, null)
             };
             foreach (var file in Directory.GetFiles(location))
@@ -235,22 +295,22 @@ namespace Managers
         }
 
         //TODO allow for naming the config file. 
-        public static void SerializeData<T>(T data, ConfigName configLocation)
+        public static void SerializeData<T>(T data, XmlManager.ConfigName configLocation)
         {
             string location;
             SetupPaths(); //TODO temp
             switch (configLocation)
             {
-                case ConfigName.EnemyConfig:
+                case XmlManager.ConfigName.EnemyConfig:
                     location = _enemyXmlConfig;
                     break;
-                case ConfigName.WaveDataConfig:
+                case XmlManager.ConfigName.WaveDataConfig:
                     location = _waveDataXmlConfig;
                     break;
-                case ConfigName.StoreContentConfig:
+                case XmlManager.ConfigName.StoreContentConfig:
                     location = _storeContentXmlConfig;
                     break;
-                case ConfigName.PlayerWeaponProjectileConfig:
+                case XmlManager.ConfigName.PlayerWeaponProjectileConfig:
                     location = _playerWeaponProjectileConfig;
                     break;
                 default:
@@ -265,6 +325,13 @@ namespace Managers
             XmlSerializer x = new(typeof(T));
             x.Serialize(writer, data);
             writer.Close();
+        }
+
+        public static void LoadAllXml()
+        {
+            SpawnManager.Instance.LoadSpawnManagerDataXml();
+            WaveManager.Instance.SetupWaveData();
+            EventManager.Instance.InvokeOnDataDeserialization();
         }
     }
 }

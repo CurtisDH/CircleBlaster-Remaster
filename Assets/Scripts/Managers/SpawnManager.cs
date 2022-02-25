@@ -72,7 +72,7 @@ namespace Managers
             //Deserialize data
             //Create enemy prefab from the given information
             AllPrefabs = new Dictionary<string, GameObject>();
-            GeneratePrefabsFromDeserializedXML();
+            //GeneratePrefabsFromDeserializedXML();
         }
 
         private void GeneratePrefabsFromDeserializedXML()
@@ -80,10 +80,25 @@ namespace Managers
             var allEnemyData = XmlManager.DeserializeEnemyData();
             foreach (var e in allEnemyData)
             {
+                Debug.Log("Creating blank prefab");
                 var blankPrefab = Instantiate(enemyBlankPrefab);
+                Debug.Log("Created blank prefab");
+                Debug.Log("Getting Enemybase Component");
                 var component = blankPrefab.GetComponent<EnemyBase>();
-                blankPrefab.GetComponent<NetworkObject>().Spawn();
+                Debug.Log("Got Enemybase Component");
+
+                if (IsServer)
+                    blankPrefab.GetComponent<NetworkObject>().Spawn();
+                Debug.Log("Attempting InitialSetup");
+
                 component.InitialSetup(e.speed, e.damage, e.colours, e.health, e.scale, e.uniqueID);
+                Debug.Log("Completed Initial setup");
+                Debug.Log("Attempting to add to AllPrefabs");
+                if (AllPrefabs == null)
+                {
+                    AllPrefabs = new Dictionary<string, GameObject>();
+                }
+
                 AllPrefabs.Add(e.uniqueID, component.gameObject);
                 blankPrefab.name = $"Enemy:{e.uniqueID}";
                 blankPrefab.SetActive(false);
@@ -95,7 +110,8 @@ namespace Managers
             {
                 var blankPrefab = Instantiate(projectileBlankPrefab);
                 var component = blankPrefab.GetComponent<Projectile>();
-                blankPrefab.GetComponent<NetworkObject>().Spawn();
+                if (IsServer)
+                    blankPrefab.GetComponent<NetworkObject>().Spawn();
                 component.InitialSetup(p.speed, p.damage, p.colours, p.pierce,
                     p.scale, p.uniqueID);
                 AllPrefabs.Add(p.uniqueID, component.gameObject);
@@ -103,7 +119,12 @@ namespace Managers
                 blankPrefab.SetActive(false);
             }
 
-            EventManager.Instance.InvokeOnDataDeserialization();
+            NetworkInformationManager.Instance.SetPrefabData(AllPrefabs);
+        }
+
+        public void LoadSpawnManagerDataXml()
+        {
+            GeneratePrefabsFromDeserializedXML();
         }
 
 

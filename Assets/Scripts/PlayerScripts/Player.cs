@@ -31,12 +31,30 @@ namespace PlayerScripts
 
         private bool _playerReady;
         private bool _playerCanMove;
-        [SerializeField]
-        private string playerWeaponUniqueID = "weapon_fast";
+
+        private bool dataHasBeenDeserialized;
+        [SerializeField] private string playerWeaponUniqueID = "weapon_fast";
 
         private void OnEnable()
         {
-            EventManager.Instance.OnDataDeserialization += OnDataDeserialization;
+            if (dataHasBeenDeserialized)
+            {
+                OnDataDeserialization();
+                return;
+            }
+
+            if (IsServer)
+                EventManager.Instance.OnDataDeserialization += OnDataDeserialization;
+            else
+            {
+                EventManager.Instance.OnDataDeserializationClient += OnDataDeserialization;
+            }
+
+            if (!IsServer)
+                NetworkInformationManager.Instance.RequestClientDataServerRpc();
+
+
+            //Request data
 
             //TODO Allow customisation within a UI menu.
         }
@@ -161,7 +179,10 @@ namespace PlayerScripts
         private void UnsubscribeServerEvents()
         {
             if (IsServer)
+            {
                 EventManager.Instance.OnEnemyHitEvent -= OnPlayerEnemyHitEvent;
+                EventManager.Instance.OnDataDeserialization -= OnDataDeserialization;
+            }
         }
 
 
@@ -252,12 +273,12 @@ namespace PlayerScripts
                     id = UInt64.MaxValue;
                 }
 
-                RequestProjectileSpawnServerRPC(id,playerWeaponUniqueID);
+                RequestProjectileSpawnServerRPC(id, playerWeaponUniqueID);
             }
         }
 
         [ServerRpc]
-        private void RequestProjectileSpawnServerRPC(ulong clientID,string projectileID)
+        private void RequestProjectileSpawnServerRPC(ulong clientID, string projectileID)
         {
             //TODO probably gonna error here
             var id = clientID;

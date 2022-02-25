@@ -41,6 +41,17 @@ namespace Managers
             isWaveActive.OnValueChanged += OnWaveStatusChange;
             endGame.OnValueChanged += EndGameLogic;
             EventManager.Instance.OnEnemySpawnEvent += EnemySpawnEvent;
+            EventManager.Instance.OnServerStart += OnServerStart;
+        }
+
+        private void OnServerStart()
+        {
+            
+            //Figure out how to send all the data to client
+            if (IsServer)
+            {
+                XmlManager.LoadAllXml();
+            }
         }
 
         private void EndGameLogic(bool previousvalue, bool newvalue)
@@ -124,6 +135,10 @@ namespace Managers
                 // Store spawns at 0,0,0? || Could spawn randomly and setup a script to display location with arrow.
             }
         }
+        
+        //TODO send information to the client upon connection. - all the XML's.
+        //Create an additional folder that contains (SERVERID?) folder struct which is the servers XML's
+        //OR only load it as an instance
 
         private void OnWaveComplete()
         {
@@ -136,9 +151,9 @@ namespace Managers
 
         private void HealAllPlayers(int waveRoundValue)
         {
-            if (!IsServer) return;
+            if (!IsServer || endGame.Value) return;
 
-            foreach (var player in PlayerConnectionManager.Instance.ConnectedPlayerComponents)
+        foreach (var player in PlayerConnectionManager.Instance.ConnectedPlayerComponents)
             {
                 player.health.Value += waveRoundValue;
 
@@ -224,6 +239,7 @@ namespace Managers
             isWaveActive.OnValueChanged -= OnWaveStatusChange;
             EventManager.Instance.OnEnemySpawnEvent -= EnemySpawnEvent;
             endGame.OnValueChanged -= EndGameLogic;
+            EventManager.Instance.OnServerStart -= OnServerStart;
         }
     }
 }

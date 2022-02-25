@@ -13,6 +13,8 @@ namespace Utility
         private Dictionary<string, List<Component>> _uniqueIdPooledObjects = new();
         [SerializeField] private List<PoolConfig> prefabs;
 
+        private bool _dataHasBeenDeserialized = false;
+
         [Serializable]
         public struct PoolConfig
         {
@@ -37,6 +39,7 @@ namespace Utility
 
         private void DataSerialization()
         {
+            if (_dataHasBeenDeserialized) return;
             foreach (var p in SpawnManager.Instance.AllPrefabs)
             {
                 var poolConfig = new PoolConfig
@@ -47,6 +50,8 @@ namespace Utility
                 };
                 prefabs.Add(poolConfig);
             }
+
+            _dataHasBeenDeserialized = true;
 
             PreCache();
         }
@@ -123,7 +128,8 @@ namespace Utility
                 }
             }
 
-            if (CreateObjectIfMissing(typeof(T), out T component,uniqueID)) return component; //TODO incorrect projectile
+            if (CreateObjectIfMissing(typeof(T), out T component, uniqueID))
+                return component; //TODO incorrect projectile
 
             return null;
         }
@@ -147,7 +153,8 @@ namespace Utility
             return null; // TODO 
         }
 
-        private bool CreateObjectIfMissing<T>(Type componentType ,out T component, string uniqueID = "NULL") where T : Component
+        private bool CreateObjectIfMissing<T>(Type componentType, out T component, string uniqueID = "NULL")
+            where T : Component
         {
             Debug.Log("Creating object as it is missing");
             for (var i = 0; i <= prefabs.Count; i++)

@@ -13,16 +13,6 @@ namespace Managers
         private List<XmlManager.FullWaveInformation> _fullWaveInformation = new();
         private Dictionary<int, List<XmlManager.Wave>> _sortedWaveData = new();
 
-        private void OnEnable()
-        {
-            EventManager.Instance.OnServerStart += SetupWaveData;
-        }
-
-        private void OnDisable()
-        {
-            EventManager.Instance.OnServerStart -= SetupWaveData;
-        }
-
         private void GetFullWaveInformation()
         {
             _fullWaveInformation = XmlManager.DeserializeWaveData();
@@ -58,15 +48,16 @@ namespace Managers
             StartCoroutine(StartSpawning(sortedWaves, 0.1f));
 
             //Generate Spawn the last spawned wave + wave before that then repeat +1 .. +2 ... etc ?
-            
         }
 
+        //TODO potential bug -- If an enemy immediately dies before the next one is spawned
+        // the wave will be considered over
         IEnumerator StartSpawning(List<XmlManager.Wave> listOfWaves, float delay)
         {
-            var waitForSeconds = new WaitForSeconds(delay);
             var spawnMangerInstance = SpawnManager.Instance;
             foreach (var waveData in listOfWaves)
             {
+                var waitForSeconds = new WaitForSeconds(waveData.delayBetweenSpawns);
                 for (var i = 0; i < waveData.amountToSpawn; i++)
                 {
                     yield return waitForSeconds;
@@ -77,10 +68,11 @@ namespace Managers
             }
         }
 
-        private void SetupWaveData()
+        public void SetupWaveData()
         {
             Debug.Log("test");
             GetFullWaveInformation();
         }
+
     }
 }

@@ -103,12 +103,17 @@ namespace Managers
         }
 
         public Action OnDataDeserialization;
+        public Action OnDataDeserializationClient;
         public void InvokeOnDataDeserialization()
         {
             TrackEvent("OnDataDeserialization");
             OnDataDeserialization?.Invoke();
         }
-        
+        public void InvokeOnDataDeserializationClient()
+        {
+            TrackEvent("OnDataDeserialization");
+            OnDataDeserializationClient?.Invoke();
+        }
         //TODO generalise this class
     }
 }
