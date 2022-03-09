@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Enemy;
 using Unity.Netcode;
 using UnityEngine;
 using Utility;
+using Random = UnityEngine.Random;
 
 namespace Managers
 {
@@ -33,8 +35,8 @@ namespace Managers
             }
         }
 
-        [ServerRpc]
-        public void StartNextWaveServerRPC()
+        [ClientRpc]
+        public void StartNextWaveClientRpc()
         {
             var keyToCheckFor = GameManager.Instance.waveRound.Value;
             if (!_sortedWaveData.ContainsKey(GameManager.Instance.waveRound.Value))
@@ -54,18 +56,23 @@ namespace Managers
         // the wave will be considered over
         IEnumerator StartSpawning(List<XmlManager.Wave> listOfWaves, float delay)
         {
-            var spawnMangerInstance = SpawnManager.Instance;
             foreach (var waveData in listOfWaves)
             {
                 var waitForSeconds = new WaitForSeconds(waveData.delayBetweenSpawns);
                 for (var i = 0; i < waveData.amountToSpawn; i++)
                 {
                     yield return waitForSeconds;
-                    spawnMangerInstance.SpawnNetworkObjectFromPrefabObject(
-                        spawnMangerInstance.GetObjectFromUniqueID(waveData.uniqueEnemyID),
-                        spawnMangerInstance.SetSpawnPosition());
+                    SpawnEnemyClientRpc(waveData.uniqueEnemyID);
                 }
             }
+        }
+
+        [ClientRpc]
+        private void SpawnEnemyClientRpc(string objectID)
+        {
+            var spawnMangerInstance = SpawnManager.Instance;
+            spawnMangerInstance.SpawnObjectFromUniqueID<EnemyBase>((objectID),
+                spawnMangerInstance.SetSpawnPosition(spawnMangerInstance.GetSeed()));
         }
 
         public void SetupWaveData()
@@ -73,6 +80,5 @@ namespace Managers
             Debug.Log("test");
             GetFullWaveInformation();
         }
-
     }
 }

@@ -17,13 +17,13 @@ namespace Managers
         [SerializeField] private NetworkVariable<bool> isWaveActive = new();
         [SerializeField] public NetworkVariable<int> waveRound = new();
         [SerializeField] private NetworkVariable<bool> endGame = new();
+        [SerializeField] private NetworkVariable<bool> storeIsActive = new();
         [SerializeField] private List<EnemyBase> activeEnemies = new();
 
         [SerializeField] private GameObject storeGameObject;
         [SerializeField] private float storeTimerFloat = 10f; //TODO start wave early button (VOTE SYSTEM?)
         private WaitForSeconds _storeTimerWaitForSeconds;
-
-        //todo why do i not have a reference to the alive player components here
+        [SerializeField] private NetworkVariable<bool> _initialTimerStarted;
 
         private void OnEnable()
         {
@@ -46,10 +46,10 @@ namespace Managers
 
         private void OnServerStart()
         {
-            
-            //Figure out how to send all the data to client
             if (IsServer)
             {
+                if (!_initialTimerStarted.Value)
+                    StartCoroutine(InitialTimer());
                 XmlManager.LoadAllXml();
             }
         }
@@ -85,7 +85,8 @@ namespace Managers
                 activeEnemies.Add(enemyBaseComponent);
             }
 
-            UpdateWaveStatus();
+            if (IsServer)
+                UpdateWaveStatus();
         }
 
         public void EndGame()
@@ -98,6 +99,11 @@ namespace Managers
 
         private void UpdateWaveStatus()
         {
+            if (waveRound.Value <= 0)
+            {
+                return;
+            }
+
             if (activeEnemies.Count <= 0)
             {
                 isWaveActive.Value = false;
@@ -105,6 +111,14 @@ namespace Managers
             }
 
             isWaveActive.Value = true;
+        }
+
+        IEnumerator InitialTimer()
+        {
+            _initialTimerStarted.Value = true;
+            yield return new WaitForSeconds(5f);
+            isWaveActive.Value = true;
+            isWaveActive.Value = false;
         }
 
         private void OnWaveStatusChange(bool previousValue, bool waveIsActive)
@@ -135,7 +149,7 @@ namespace Managers
                 // Store spawns at 0,0,0? || Could spawn randomly and setup a script to display location with arrow.
             }
         }
-        
+
         //TODO send information to the client upon connection. - all the XML's.
         //Create an additional folder that contains (SERVERID?) folder struct which is the servers XML's
         //OR only load it as an instance
@@ -153,7 +167,7 @@ namespace Managers
         {
             if (!IsServer || endGame.Value) return;
 
-        foreach (var player in PlayerConnectionManager.Instance.ConnectedPlayerComponents)
+            foreach (var player in PlayerConnectionManager.Instance.ConnectedPlayerComponents)
             {
                 player.health.Value += waveRoundValue;
 
@@ -161,9 +175,9 @@ namespace Managers
                 //Maybe a healing particle effect that gets played //TODO
                 //Make this look better, looks horrible right now
                 StartCoroutine(SlowHealPlayer(player, 0.1f, waveRoundValue));
-
             }
         }
+
         //Looks better but still not great. Good enough until the reskin
         IEnumerator SlowHealPlayer(Player player, float delay, float waveRoundValue)
         {
@@ -190,7 +204,8 @@ namespace Managers
         private void EnableStore(bool setStatus)
         {
             storeGameObject.SetActive(setStatus);
-
+            if (IsServer)
+                storeIsActive.Value = setStatus;
             var Colour = UnityEngine.Color.green;
             var storeStatus = "Open";
             if (!setStatus)
@@ -231,7 +246,7 @@ namespace Managers
 
             EnableStore(false);
             if (IsServer)
-                WaveManager.Instance.StartNextWaveServerRPC();
+                WaveManager.Instance.StartNextWaveClientRpc();
         }
 
         private void UnsubscribeEvents()

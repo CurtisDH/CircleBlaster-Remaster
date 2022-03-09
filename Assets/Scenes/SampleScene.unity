@@ -221,11 +221,6 @@ MonoBehaviour:
       SourceHashToOverride: 0
       OverridingTargetPrefab: {fileID: 0}
     - Override: 0
-      Prefab: {fileID: 7690839101265195202, guid: d5e86494d7fe1dd4fb52eff3059d03a0, type: 3}
-      SourcePrefabToOverride: {fileID: 0}
-      SourceHashToOverride: 0
-      OverridingTargetPrefab: {fileID: 0}
-    - Override: 0
       Prefab: {fileID: 278920477}
       SourcePrefabToOverride: {fileID: 0}
       SourceHashToOverride: 0
@@ -534,9 +529,13 @@ MonoBehaviour:
     m_InternalValue: 0
   endGame:
     m_InternalValue: 0
+  storeIsActive:
+    m_InternalValue: 0
   activeEnemies: []
   storeGameObject: {fileID: 541709570}
-  storeTimerFloat: 20
+  storeTimerFloat: 10
+  _initialTimerStarted:
+    m_InternalValue: 0
 --- !u!114 &323896781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -633,16 +632,16 @@ MonoBehaviour:
   prefabs:
   - Prefab: {fileID: 5174059667085638991, guid: 1de5b5825753005458e36abed11224f8, type: 3}
     uniqueID: 
-    PreCacheCount: 250
+    PreCacheCount: 10
   - Prefab: {fileID: 517012955658475629, guid: 3dfcc211b140fef479a6e639829e509a, type: 3}
     uniqueID: 
-    PreCacheCount: 250
+    PreCacheCount: 10
   - Prefab: {fileID: 517012955658475629, guid: 5b93ff440622f154cbfb4e258e143d2a, type: 3}
     uniqueID: 
-    PreCacheCount: 250
+    PreCacheCount: 10
   - Prefab: {fileID: 8223671397134613871, guid: a13213b49ad90ae4790b285193257531, type: 3}
     uniqueID: 
-    PreCacheCount: 250
+    PreCacheCount: 10
 --- !u!114 &827200835
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -655,7 +654,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db37838d42317ef4f9a020f167c1eee9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pooledPrefabsList: []
 --- !u!114 &827200836
 MonoBehaviour:
   m_ObjectHideFlags: 0

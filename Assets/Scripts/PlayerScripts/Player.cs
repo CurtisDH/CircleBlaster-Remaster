@@ -16,6 +16,7 @@ namespace PlayerScripts
         [SerializeField] private SpriteRenderer teamColourSpriteRenderer;
         [SerializeField] private PlayerWeapon weapon;
         [SerializeField] private float initialHealth = 100f;
+        [SerializeField]
         public NetworkVariable<float> health;
         [SerializeField] private NetworkVariable<bool> isDead;
 
@@ -28,7 +29,8 @@ namespace PlayerScripts
         [SerializeField] float moveSpeed = 10;
 
         [SerializeField] private ulong clientID;
-
+        
+        [SerializeField]
         private bool _playerReady;
         private bool _playerCanMove;
 
@@ -37,14 +39,34 @@ namespace PlayerScripts
 
         private void OnEnable()
         {
+            //TODO this works but probably not well
+            SetupPlayerTag("Player");
+            SetPlayerColours();
             if (dataHasBeenDeserialized)
             {
                 OnDataDeserialization();
                 return;
             }
 
+            //TODO figure out why the server doesnt setup the player | this includes tag, colour etc.
+            
+            //TODO client cant kill enemies
+
+            
+            
+            // GIT COMMIT --
+            /*
+             * Converted most interactions into client side instead of network side
+             * This is because it was much easier to handle the XML | In hindsight might be able to make the modifications
+             * to the projectiles / enemies after they spawn but committing to client sided for now
+             */
+
             if (IsServer)
+            {
                 EventManager.Instance.OnDataDeserialization += OnDataDeserialization;
+                if (dataHasBeenDeserialized)
+                    StartCoroutine(InitialisePlayer());
+            }
             else
             {
                 EventManager.Instance.OnDataDeserializationClient += OnDataDeserialization;
@@ -130,6 +152,7 @@ namespace PlayerScripts
             }
             else
             {
+                Debug.Log("active player is null");
                 SetupCamera(null, false);
             }
         }
@@ -152,6 +175,7 @@ namespace PlayerScripts
 
         private void OnPlayerHealthChange(float previousvalue, float newvalue)
         {
+            Debug.Log("OnPlayerHealthChange");
             if (health.Value <= 0)
             {
                 PlayerDeath();
@@ -258,49 +282,37 @@ namespace PlayerScripts
         {
             if (Input.GetKeyDown(KeybindManager.Instance.shootPrimary))
             {
-                //Client
-                var projectile = ObjectPooling.Instance.RequestComponentUsingUniqueID<Projectile>(playerWeaponUniqueID);
-                //TODO do this by id, otherwise we wont have customisable projectiles.
-                //projectile.ProjectileSetup(teamID, moveSpeed, 1);
-                //TODO projectile needs to be based on whatever weapon is equipped
-                //TODO the entire weapon system
-                projectile.SetServerProjectileStatus(false);
-                SetupProjectilePosition(projectile.gameObject);
-                //Server
-                var id = NetworkManager.LocalClientId;
-                if (UIManager.Instance.IsHosting())
-                {
-                    id = UInt64.MaxValue;
-                }
-
-                RequestProjectileSpawnServerRPC(id, playerWeaponUniqueID);
+                RequestProjectileSpawnServerRPC(playerWeaponUniqueID);
             }
+        }
+
+        [ClientRpc]
+        private void ShootClientRpc(string uniqueID)
+        {
+            var projectile = ObjectPooling.Instance.RequestComponentUsingUniqueID(uniqueID);
+            //TODO do this by id, otherwise we wont have customisable projectiles.
+            //projectile.ProjectileSetup(teamID, moveSpeed, 1);
+            //TODO projectile needs to be based on whatever weapon is equipped
+            //TODO the entire weapon system
+            SetupProjectilePosition(projectile);
         }
 
         [ServerRpc]
-        private void RequestProjectileSpawnServerRPC(ulong clientID, string projectileID)
+        private void RequestProjectileSpawnServerRPC(string uniqueID)
         {
-            //TODO probably gonna error here
-            var id = clientID;
-            var projectile =
-                NetworkObjectPooling.Instance.GetNetworkObject(
-                    SpawnManager.Instance.GetObjectFromUniqueID(projectileID));
-            SetupProjectilePosition(projectile.gameObject);
-            projectile.Spawn();
-            //Stops the client from seeing the server sided projectile they just fired.
-            if (id != ulong.MaxValue)
-            {
-                projectile.NetworkHide(id);
-            }
+            ShootClientRpc(uniqueID);
         }
+
 
         private void SetupProjectilePosition(GameObject projectile)
         {
-            projectile.SetActive(true);
             var projectileTransform = projectile.transform;
             var weaponTransform = weapon.transform;
             projectileTransform.rotation = weaponTransform.rotation;
             projectileTransform.position = weaponTransform.position;
+            projectile.SetActive(true);
+            //Needs to always be SetActive last as the startPos wont be updated
+            //This will cause the projectile to immediately despawn.
         }
 
         private void PlayerMovement()

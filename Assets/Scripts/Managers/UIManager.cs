@@ -88,9 +88,9 @@ namespace Managers
             }
 
             SetPort();
-            Debug.Log(_hosting);
-            Debug.Log(_connected);
-            Debug.Log(_dedicated);
+            // Debug.Log(_hosting);
+            // Debug.Log(_connected);
+            // Debug.Log(_dedicated);
             if (!_hosting && _connected && !_dedicated)
             {
                 NetworkManager.Singleton.StartClient();
@@ -102,9 +102,9 @@ namespace Managers
         public void StartDedicated()
         {
             _dedicated = !_dedicated;
-            Debug.Log(_hosting);
-            Debug.Log(_connected);
-            Debug.Log(_dedicated);
+            // Debug.Log(_hosting);
+            // Debug.Log(_connected);
+            // Debug.Log(_dedicated);
             SetPort();
             if (!_hosting && !_connected && _dedicated)
             {

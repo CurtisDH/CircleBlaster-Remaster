@@ -16,7 +16,7 @@ namespace Enemy
         [SerializeField] private float damage;
         [SerializeField] private List<Color> colours;
         [SerializeField] private float initialHealth;
-        [SerializeField] private NetworkVariable<float> health;
+        [SerializeField] private float health;
 
         [SerializeField] private SpriteRenderer[] spriteRenderers;
 
@@ -24,7 +24,7 @@ namespace Enemy
         private bool _colourConfigured;
 
         [SerializeField] private float _scale;
-        private string _uniqueID;
+        [SerializeField] private string _uniqueID;
         [SerializeField] private bool _initialSetupCompleted;
 
         public void SetClosestPlayerTransform(Transform transform)
@@ -45,6 +45,7 @@ namespace Enemy
             }
 
             SubscribeEvents();
+            ObjectPooling.Instance.PoolUniqueIDObject(_uniqueID, this.gameObject, false);
 
             if (_colourConfigured)
             {
@@ -70,9 +71,6 @@ namespace Enemy
 
         private void SubscribeEvents()
         {
-            if (!IsServer) return;
-
-            health.OnValueChanged += CheckIfDead;
             EventManager.Instance.OnProjectileHitEvent += OnProjectileHit;
             //Adds enemy to active enemy list (GameManager)
             EventManager.Instance.OnEndGameEvent += EndGame;
@@ -81,7 +79,6 @@ namespace Enemy
 
         private void UnsubscribeEvents()
         {
-            health.OnValueChanged -= CheckIfDead;
             EventManager.Instance.OnEndGameEvent -= EndGame;
             EventManager.Instance.OnProjectileHitEvent -= OnProjectileHit;
             EventManager.Instance.InvokeEnemySpawnEvent(this, false);
@@ -89,32 +86,26 @@ namespace Enemy
             //Removes enemy from active enemy list (GameManager)
         }
 
-        [ServerRpc]
-        private void OnHitServerRpc(float damage)
-        {
-            health.Value -= damage;
-        }
 
         private void OnDisable()
         {
             if (!_initialSetupCompleted)
             {
+                Debug.Log("Initial Setup not completed.");
                 return;
             }
 
-            OnDeath();
-            if (!IsServer) return;
-
+            //OnDeath();
             UnsubscribeEvents();
         }
 
 
-        private void CheckIfDead(float previousvalue, float newvalue)
+        private void CheckIfDead()
         {
-            if (newvalue <= 0)
+            if (health <= 0)
             {
-                health.Value = initialHealth;
-                DespawnEnemyServerRpc();
+                health = initialHealth;
+                OnDeath();
             }
         }
 
@@ -122,28 +113,29 @@ namespace Enemy
         {
             if (obj == gameObject && damage > 0)
             {
-                OnHitServerRpc(damage);
+                ReceiveDamage(damage);
             }
         }
 
-        [ServerRpc]
-        private void DespawnEnemyServerRpc()
-        {
-            if (networkObject.IsSpawned)
-                networkObject.Despawn();
-        }
 
+        private void ReceiveDamage(float damage)
+        {
+            health -= damage;
+            CheckIfDead();
+        }
 
         private void OnDeath()
         {
             var deathParticle = ObjectPooling.Instance.RequestComponentFromPool<EnemyDeathParticle>();
             deathParticle.transform.position = transform.position;
             deathParticle.gameObject.SetActive(true);
+            ObjectPooling.Instance.PoolUniqueIDObject(_uniqueID, this.gameObject);
+            gameObject.SetActive(false);
         }
 
         public void EndGame()
         {
-            DespawnEnemyServerRpc();
+            OnDeath();
         }
 
 
@@ -161,10 +153,9 @@ namespace Enemy
             if (!col.CompareTag("Player")) return;
 
 
-            if (IsServer)
-            {
-                health.Value = 0;
-            }
+            health = 0;
+            CheckIfDead();
+
 
             EventManager.Instance.InvokeOnEnemyHitEvent(col.gameObject, damage);
         }
@@ -178,10 +169,9 @@ namespace Enemy
             this.initialHealth = eHealth;
             this._scale = eScale;
             this._uniqueID = eUniqueID;
-            if (IsServer)
-            {
-                health.Value = initialHealth;
-            }
+
+            health = initialHealth;
+
 
             _initialSetupCompleted = true;
         }

@@ -42,6 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\PlayerScripts\Camera\CameraController.cs" />
+     <Compile Include="Assets\Scripts\Managers\NetworkInformationManager.cs" />
      <Compile Include="Assets\Scripts\Managers\UIManager.cs" />
      <Compile Include="Assets\Scripts\PlayerScripts\Projectile.cs" />
      <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
@@ -66,7 +67,6 @@
      <Compile Include="Assets\Scripts\Particle Scripts\EnemyDeathParticle.cs" />
      <Compile Include="Assets\Scripts\Utility\MonoSingleton.cs" />
      <Compile Include="Assets\Scripts\PlayerScripts\Player.cs" />
-     <Compile Include="Assets\Scripts\Managers\NetworkInformationManager.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

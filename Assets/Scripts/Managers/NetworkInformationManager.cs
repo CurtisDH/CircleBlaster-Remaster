@@ -27,6 +27,7 @@ namespace Managers
             _fullWaveInformation = fullWaveInformation;
         }
 
+        //TODO could this be exploited to send ANY FILE?! Look into this..
         [ServerRpc(RequireOwnership = false)]
         public void RequestClientDataServerRpc()
         {
@@ -55,11 +56,13 @@ namespace Managers
         //TODO probably need a bool to say "hey we've downloaded the xml, dont redownload and reload it"
         public void SendXMLFilesToClientRpc(string path, byte[] byteArray)
         {
-            var fEx = Path.GetFileName(path);
-            var dir = Path.GetDirectoryName(path);
-            path = Path.Combine(dir, "ServerConfigs",fEx);
+            var fileName = Path.GetFileName(path);
+            var directory = Path.GetDirectoryName(path);
+            path = Path.Combine(directory, "LastConnectedSession",fileName);
             XmlManager.VerifyConfigExists(path);
-            Debug.Log($"Client received: PATH:{path}");
+            
+            //TODO make client load from server config path
+            // Debug.Log($"Client received: PATH:{path}");
             if (!IsServer)
             {
                 XmlManager.SetupPaths();

@@ -1,7 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Managers;
+using PlayerScripts;
 using UnityEngine;
 
 namespace Utility
@@ -10,7 +11,7 @@ namespace Utility
     public class ObjectPooling : NetworkSingleton<ObjectPooling>
     {
         private Dictionary<Type, List<Component>> _pooledObjects = new();
-        private Dictionary<string, List<Component>> _uniqueIdPooledObjects = new();
+        private Dictionary<string, List<GameObject>> _uniqueIdPooledObjects = new();
         [SerializeField] private List<PoolConfig> prefabs;
 
         private bool _dataHasBeenDeserialized = false;
@@ -39,6 +40,7 @@ namespace Utility
 
         private void DataSerialization()
         {
+            Debug.Log("data serial");
             if (_dataHasBeenDeserialized) return;
             foreach (var p in SpawnManager.Instance.AllPrefabs)
             {
@@ -56,13 +58,24 @@ namespace Utility
             PreCache();
         }
 
+  
+
         private void PreCache()
         {
             foreach (var config in prefabs)
             {
                 for (int i = 0; i <= config.PreCacheCount; i++)
                 {
-                    GameObject prefab = SpawnManager.Instance.GetObjectFromUniqueID(config.uniqueID);
+                    GameObject prefab = null;
+                    if (!String.IsNullOrEmpty(config.uniqueID))
+                    {
+                        prefab = SpawnManager.Instance.GetObjectFromUniqueID(config.uniqueID);
+                        var p = Instantiate(prefab, this.transform, true);
+                        //Wasn't pooling correctly
+                        p.SetActive(true);
+                        p.SetActive(false);
+                        continue;
+                    }
 
 
                     if (config.Prefab != null)
@@ -70,6 +83,7 @@ namespace Utility
                         prefab = config.Prefab;
                     }
 
+                    //Debug.Log($"Creating prefab:{prefab.name}");
                     var obj = Instantiate(prefab,
                         this.transform,
                         true);
@@ -97,41 +111,54 @@ namespace Utility
                 _pooledObjects[componentType].Remove(component);
         }
 
-        public void PoolUniqueIDObject(string uniqueID, Component component, bool add = true)
+        public void PoolUniqueIDObject(string uniqueID, GameObject gameObject, bool add = true)
         {
             if (add)
             {
                 if (!_uniqueIdPooledObjects.ContainsKey(uniqueID))
                 {
-                    var componentList = new List<Component>();
-                    componentList.Add(component);
+                    var componentList = new List<GameObject>();
+                    componentList.Add(gameObject);
+
                     _uniqueIdPooledObjects.Add(uniqueID, componentList);
                 }
 
-                _uniqueIdPooledObjects[uniqueID].Add(component);
+                _uniqueIdPooledObjects[uniqueID].Add(gameObject);
                 return;
             }
 
-            _uniqueIdPooledObjects[uniqueID].Remove(component);
+            if (_uniqueIdPooledObjects.ContainsKey(uniqueID))
+                _uniqueIdPooledObjects[uniqueID].Remove(gameObject);
         }
 
-        public T RequestComponentUsingUniqueID<T>(string uniqueID) where T : Component
+        public GameObject RequestComponentUsingUniqueID(string uniqueID)
         {
+            //Todo something is wrong here.
+            foreach (var p in _uniqueIdPooledObjects)
+            {
+                Debug.Log(p.Key);
+            }
+
             if (_uniqueIdPooledObjects.ContainsKey(uniqueID))
             {
                 if (_uniqueIdPooledObjects[uniqueID].Count > 0)
                 {
-                    var objToReturn = _uniqueIdPooledObjects[uniqueID][0] as T;
+                    var objToReturn = _uniqueIdPooledObjects[uniqueID][0];
                     PoolUniqueIDObject(uniqueID, objToReturn, false);
-                    Debug.Log("returned object from pool");
                     return objToReturn;
                 }
             }
 
-            if (CreateObjectIfMissing(typeof(T), out T component, uniqueID))
-                return component; //TODO incorrect projectile
+            return CreateObjectIfMissingUniqueID(uniqueID);
+        }
 
-            return null;
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                CreateObjectIfMissing(typeof(Projectile), out Projectile comp, "weapon_fast");
+                comp.gameObject.SetActive(true);
+            }
         }
 
         public T RequestComponentFromPool<T>() where T : Component
@@ -182,6 +209,23 @@ namespace Utility
 
             component = null;
             return false;
+        }
+
+        private GameObject CreateObjectIfMissingUniqueID(string uniqueID = "NULL")
+        {
+            Debug.Log("Creating object as it is missing");
+            for (var i = 0; i <= prefabs.Count; i++)
+            {
+                GameObject prefab = null;
+                if (uniqueID != "NULL")
+                {
+                    prefab = SpawnManager.Instance.GetObjectFromUniqueID(uniqueID);
+                    var obj = Instantiate(prefab);
+                    return obj;
+                }
+            }
+
+            return null;
         }
     }
 }

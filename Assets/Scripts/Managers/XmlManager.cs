@@ -331,6 +331,7 @@ namespace Managers
         {
             SpawnManager.Instance.LoadSpawnManagerDataXml();
             WaveManager.Instance.SetupWaveData();
+            Debug.Log("Completed data");
             EventManager.Instance.InvokeOnDataDeserialization();
         }
     }

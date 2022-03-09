@@ -5,6 +5,7 @@ using Enemy;
 using PlayerScripts;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 using Random = UnityEngine.Random;
 
@@ -24,11 +25,29 @@ namespace Managers
         [SerializeField] private float minSpawnRadiusSize = 25f;
 
 
-        public void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position, bool enemyType = true)
+        private int _seedCount;
+
+        public int GetSeed()
         {
-            var prefabObject = NetworkObjectPooling.Instance.GetNetworkObject(prefab);
+            _seedCount++;
+            return _seedCount;
+        }
+
+
+        // public void SpawnNetworkObjectFromPrefabObject(GameObject prefab, Vector3 position, bool enemyType = true)
+        // {
+        //     var prefabObject = NetworkObjectPooling.Instance.GetNetworkObject(prefab);
+        //     prefabObject.transform.position = position;
+        //     //prefabObject.gameObject.SetActive(true);
+        //     //prefabObject.Spawn();
+        // }
+
+        public void SpawnObjectFromUniqueID<T>(string id, Vector3 position) where T : Component
+        {
+            var prefabObject = ObjectPooling.Instance.RequestComponentUsingUniqueID(id);
             prefabObject.transform.position = position;
-            prefabObject.Spawn();
+            prefabObject.gameObject.SetActive(true);
+            //prefabObject.Spawn();
         }
 
         private void Update()
@@ -37,8 +56,14 @@ namespace Managers
             {
                 //SpawnNetworkObjectFromPrefabObject(GetEnemyPrefabFromUniqueID("temp"), SetSpawnPosition());
 
-                SpawnNetworkObjectFromPrefabObject(GetObjectFromUniqueID("enemy_slow_tank"), SetSpawnPosition());
+                SpawnEnemyIdAtPositionClientRpc("enemy_slow_tank", (_seedCount));
             }
+        }
+
+        [ClientRpc]
+        private void SpawnEnemyIdAtPositionClientRpc(string uniqueID, int seed)
+        {
+            SpawnObjectFromUniqueID<EnemyBase>(uniqueID, SetSpawnPosition(seed));
         }
 
         private void OnEnable()
@@ -53,7 +78,6 @@ namespace Managers
 
         private void UnsubscribeEvents()
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= ClientConnection;
             EventManager.Instance.OnPlayerDeath -= OnPlayerDeath;
             EventManager.Instance.OnPlayerSpawn -= OnPlayerSpawn;
             EventManager.Instance.OnServerStart -= OnServerStart;
@@ -80,20 +104,11 @@ namespace Managers
             var allEnemyData = XmlManager.DeserializeEnemyData();
             foreach (var e in allEnemyData)
             {
-                Debug.Log("Creating blank prefab");
                 var blankPrefab = Instantiate(enemyBlankPrefab);
-                Debug.Log("Created blank prefab");
-                Debug.Log("Getting Enemybase Component");
                 var component = blankPrefab.GetComponent<EnemyBase>();
-                Debug.Log("Got Enemybase Component");
-
-                if (IsServer)
-                    blankPrefab.GetComponent<NetworkObject>().Spawn();
-                Debug.Log("Attempting InitialSetup");
-
+                
                 component.InitialSetup(e.speed, e.damage, e.colours, e.health, e.scale, e.uniqueID);
-                Debug.Log("Completed Initial setup");
-                Debug.Log("Attempting to add to AllPrefabs");
+                component.transform.parent = this.transform;
                 if (AllPrefabs == null)
                 {
                     AllPrefabs = new Dictionary<string, GameObject>();
@@ -110,12 +125,13 @@ namespace Managers
             {
                 var blankPrefab = Instantiate(projectileBlankPrefab);
                 var component = blankPrefab.GetComponent<Projectile>();
-                if (IsServer)
-                    blankPrefab.GetComponent<NetworkObject>().Spawn();
+
                 component.InitialSetup(p.speed, p.damage, p.colours, p.pierce,
                     p.scale, p.uniqueID);
                 AllPrefabs.Add(p.uniqueID, component.gameObject);
                 blankPrefab.name = $"Projectile:{p.uniqueID}";
+                if (IsServer)
+                    blankPrefab.GetComponent<NetworkObject>().Spawn();
                 blankPrefab.SetActive(false);
             }
 
@@ -131,8 +147,11 @@ namespace Managers
         public GameObject GetObjectFromUniqueID(string uniqueID)
         {
             if (AllPrefabs.ContainsKey(uniqueID))
+            {
+                //Debug.Log($"returning:{AllPrefabs[uniqueID]}");
                 return AllPrefabs[uniqueID];
-            Debug.LogWarning($"Provided uniqueID:{uniqueID} was not found in the dictionary.");
+            }
+            Debug.LogError($"Provided uniqueID:{uniqueID} was not found in the dictionary.");
             return null;
         }
 
@@ -150,14 +169,16 @@ namespace Managers
             }
         }
 
-        public Vector3 SetSpawnPosition()
+        public Vector3 SetSpawnPosition(int seed)
         {
+            _seedCount++;
             return RandomPointOnCircleEdge(FindCenterBetweenPlayers(),
-                FindRadiusBetweenPlayers());
+                FindRadiusBetweenPlayers(), seed);
         }
 
-        private Vector3 RandomPointOnCircleEdge(Vector3 initialPos, float radius)
+        private Vector3 RandomPointOnCircleEdge(Vector3 initialPos, float radius, int seed)
         {
+            Random.InitState(seed);
             var v2 = Random.insideUnitCircle.normalized * radius;
             var spawnPosition = new Vector3(v2.x, v2.y, 0);
             spawnPosition += initialPos;
@@ -167,18 +188,18 @@ namespace Managers
         private float FindRadiusBetweenPlayers()
         {
             float distance = 0;
-            for (int i = 0; i < _activePlayerClients.Count; i++)
+            for (int i = 0; i < alivePlayers.Count; i++)
             {
-                if (i + 1 > _activePlayerClients.Count - 1)
+                if (i + 1 > alivePlayers.Count - 1)
                 {
                     break;
                 }
 
-                distance += Vector3.Distance(_activePlayerClients[i].PlayerObject.transform.position
-                    , _activePlayerClients[i + 1].PlayerObject.transform.position);
+                distance += Vector3.Distance(alivePlayers[i].transform.position
+                    , alivePlayers[i + 1].transform.position);
             }
 
-            var radius = distance * (_activePlayerClients.Count);
+            var radius = distance * (alivePlayers.Count);
             if (radius < minSpawnRadiusSize)
             {
                 radius = minSpawnRadiusSize;
@@ -191,11 +212,11 @@ namespace Managers
         {
             Vector3 centerPos = new Vector3();
 
-            foreach (var client in _activePlayerClients)
+            foreach (var client in alivePlayers)
             {
-                var clientPos = client.PlayerObject.transform.position;
+                var clientPos = client.transform.position;
                 var newPos = new Vector3(clientPos.x, clientPos.y, clientPos.z);
-                centerPos += newPos / _activePlayerClients.Count;
+                centerPos += newPos / alivePlayers.Count;
             }
 
             return centerPos;
